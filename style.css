@@ -1,0 +1,848 @@
+/* Reset & Base Styles */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    user-select: none;
+}
+
+body, html {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background-color: #04010a;
+    font-family: 'Rajdhani', sans-serif;
+    color: #e2def2;
+}
+
+/* Neon Glow Color Palette */
+:root {
+    --cyan: #00f0ff;
+    --cyan-glow: rgba(0, 240, 255, 0.4);
+    --magenta: #ff0055;
+    --magenta-glow: rgba(255, 0, 85, 0.4);
+    --green: #39ff14;
+    --green-glow: rgba(57, 255, 20, 0.4);
+    --red: #ff2222;
+    --red-glow: rgba(255, 34, 34, 0.4);
+    --bg-dark: rgba(10, 5, 22, 0.75);
+    --spread-offset: 8px; /* Dynamic CSS variable for crosshair */
+}
+
+/* Glowing Typography Utilities */
+.glow-cyan {
+    color: var(--cyan);
+    text-shadow: 0 0 8px var(--cyan-glow), 0 0 15px rgba(0, 240, 255, 0.2);
+}
+.glow-magenta {
+    color: var(--magenta);
+    text-shadow: 0 0 8px var(--magenta-glow), 0 0 15px rgba(255, 0, 85, 0.2);
+}
+.glow-green {
+    color: var(--green);
+    text-shadow: 0 0 8px var(--green-glow), 0 0 15px rgba(57, 255, 20, 0.2);
+}
+.glow-red {
+    color: var(--red);
+    text-shadow: 0 0 8px var(--red-glow), 0 0 15px rgba(255, 34, 34, 0.2);
+}
+
+/* Layout Container */
+#game-container {
+    position: relative;
+    width: 100vw;
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+#game-canvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1;
+}
+
+/* Glassmorphism Panel base class */
+.glass {
+    background: var(--bg-dark);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 8px;
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.42);
+}
+
+/* In-Game HUD Layout */
+#hud {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 0;
+    z-index: 10;
+    pointer-events: none;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 24px;
+}
+
+/* HUD Top Bar */
+.hud-top-bar {
+    align-self: center;
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    width: 480px;
+    height: 56px;
+    padding: 10px 20px;
+    border-top: 2px solid var(--magenta);
+}
+
+.hud-stat {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.hud-stat .label {
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: rgba(226, 222, 242, 0.55);
+    letter-spacing: 2px;
+}
+
+.hud-stat .value {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 1.3rem;
+    font-weight: 700;
+}
+
+/* HUD Objectives Panel */
+#objectives-panel {
+    position: absolute;
+    top: 96px;
+    left: 24px;
+    width: 280px;
+    padding: 16px;
+    border-left: 2px solid var(--cyan);
+}
+
+.panel-header {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 0.95rem;
+    font-weight: 700;
+    letter-spacing: 1px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    padding-bottom: 6px;
+    margin-bottom: 10px;
+}
+
+#objectives-list {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.objective-item {
+    font-size: 0.95rem;
+    font-weight: 500;
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    color: rgba(226, 222, 242, 0.85);
+    line-height: 1.3;
+}
+
+.objective-item.complete {
+    color: var(--green);
+    text-shadow: 0 0 4px var(--green-glow);
+    text-decoration: line-through;
+}
+
+.objective-bullet {
+    width: 12px;
+    height: 12px;
+    border: 1px solid var(--cyan);
+    border-radius: 2px;
+    margin-top: 3px;
+    flex-shrink: 0;
+    position: relative;
+}
+
+.objective-item.complete .objective-bullet {
+    border-color: var(--green);
+    background-color: rgba(57, 255, 20, 0.2);
+}
+
+.objective-item.complete .objective-bullet::after {
+    content: "✓";
+    position: absolute;
+    top: -5px;
+    left: 1px;
+    font-size: 0.75rem;
+    color: var(--green);
+    font-weight: 900;
+}
+
+/* HUD Bottom Sections */
+.hud-bottom-left {
+    position: absolute;
+    bottom: 24px;
+    left: 24px;
+    width: 250px;
+    padding: 16px;
+    border-left: 3px solid var(--green);
+}
+
+.hud-bottom-right {
+    position: absolute;
+    bottom: 24px;
+    right: 24px;
+    width: 280px;
+    padding: 16px;
+    border-right: 3px solid var(--cyan);
+}
+
+.hud-movement-feed {
+    position: absolute;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 220px;
+    padding: 10px;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    border-bottom: 2px solid rgba(255,255,255,0.15);
+}
+
+.hud-movement-feed .state-val {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #fff;
+    letter-spacing: 1px;
+}
+
+.hud-movement-feed .accuracy-pct {
+    font-size: 0.85rem;
+    font-weight: 500;
+}
+
+/* HUD Bars (Health & Armor) */
+.hud-bar-container {
+    width: 100%;
+}
+.hud-bar-container.margin-top {
+    margin-top: 12px;
+}
+
+.hud-bar-label {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.95rem;
+    font-weight: 700;
+    letter-spacing: 1px;
+    margin-bottom: 4px;
+}
+
+.hud-bar-bg {
+    width: 100%;
+    height: 8px;
+    background-color: rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.hud-bar-fill {
+    height: 100%;
+    border-radius: 4px;
+    transition: width 0.15s ease-out;
+}
+
+.fill-green {
+    background-color: var(--green);
+    box-shadow: 0 0 8px var(--green-glow);
+}
+
+.fill-cyan {
+    background-color: var(--cyan);
+    box-shadow: 0 0 8px var(--cyan-glow);
+}
+
+/* Ammo & Weapon Display */
+.weapon-info {
+    text-align: right;
+    margin-bottom: 8px;
+}
+
+.weapon-name {
+    font-family: 'Orbitron', sans-serif;
+    font-weight: 900;
+    font-size: 1.25rem;
+}
+
+.fire-mode {
+    font-size: 0.75rem;
+    color: rgba(226, 222, 242, 0.5);
+    letter-spacing: 1.5px;
+}
+
+.ammo-display {
+    display: flex;
+    justify-content: flex-end;
+    align-items: baseline;
+    font-family: 'Orbitron', sans-serif;
+}
+
+.clip-value {
+    font-size: 2.2rem;
+    font-weight: 700;
+    color: #fff;
+    text-shadow: 0 0 8px rgba(255,255,255,0.3);
+}
+
+.separator {
+    font-size: 1.5rem;
+    color: rgba(226, 222, 242, 0.3);
+    margin: 0 8px;
+}
+
+.reserve-value {
+    font-size: 1.3rem;
+    color: rgba(226, 222, 242, 0.7);
+}
+
+/* Reloading Indicators */
+#reload-indicator {
+    width: 100%;
+    margin-top: 8px;
+    text-align: right;
+}
+
+.reload-text {
+    font-weight: 700;
+    font-size: 0.9rem;
+    letter-spacing: 2px;
+    margin-bottom: 4px;
+    animation: blink 0.8s infinite alternate;
+}
+
+.reload-bar-bg {
+    width: 100%;
+    height: 4px;
+    background-color: rgba(255, 255, 255, 0.15);
+    border-radius: 2px;
+    overflow: hidden;
+}
+
+.reload-bar-fill {
+    width: 0%;
+    height: 100%;
+    background-color: var(--magenta);
+    box-shadow: 0 0 6px var(--magenta-glow);
+}
+
+/* Dynamic CS-style Crosshair */
+#crosshair {
+    position: absolute;
+    width: 80px;
+    height: 80px;
+    z-index: 5;
+    pointer-events: none;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+#crosshair .line {
+    position: absolute;
+    background-color: var(--cyan);
+    box-shadow: 0 0 4px var(--cyan-glow);
+    border-radius: 1px;
+}
+
+#crosshair .line.top {
+    bottom: calc(50% + var(--spread-offset));
+    left: calc(50% - 1px);
+    width: 2px;
+    height: 10px;
+}
+
+#crosshair .line.right {
+    left: calc(50% + var(--spread-offset));
+    top: calc(50% - 1px);
+    width: 10px;
+    height: 2px;
+}
+
+#crosshair .line.bottom {
+    top: calc(50% + var(--spread-offset));
+    left: calc(50% - 1px);
+    width: 2px;
+    height: 10px;
+}
+
+#crosshair .line.left {
+    right: calc(50% + var(--spread-offset));
+    top: calc(50% - 1px);
+    width: 10px;
+    height: 2px;
+}
+
+#crosshair .center-dot {
+    position: absolute;
+    width: 4px;
+    height: 4px;
+    background-color: var(--cyan);
+    border-radius: 50%;
+    box-shadow: 0 0 4px var(--cyan-glow);
+}
+
+/* Sniper Scope Zoom CSS Overlay */
+#scope-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 6;
+    pointer-events: none;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.scope-ring {
+    position: relative;
+    width: min(82vh, 82vw);
+    height: min(82vh, 82vw);
+    border: 3px solid rgba(255, 0, 85, 0.7);
+    border-radius: 50%;
+    box-shadow: 0 0 0 2000px #000, 0 0 20px var(--magenta-glow);
+    overflow: hidden;
+}
+
+.scope-cross-h {
+    position: absolute;
+    top: 50%;
+    left: 0;
+    width: 100%;
+    height: 1.5px;
+    background-color: rgba(255, 0, 85, 0.8);
+    transform: translateY(-50%);
+}
+
+.scope-cross-v {
+    position: absolute;
+    left: 50%;
+    top: 0;
+    width: 1.5px;
+    height: 100%;
+    background-color: rgba(255, 0, 85, 0.8);
+    transform: translateX(-50%);
+}
+
+.scope-lens-glow {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: radial-gradient(circle, transparent 40%, rgba(5, 2, 15, 0.4) 75%, rgba(0, 240, 255, 0.15) 100%);
+}
+
+/* Hidden elements utility */
+.hidden {
+    display: none !important;
+}
+
+/* Menu Screens (Start & Game Over & Completed) */
+.menu-container {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 100;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    background-color: rgba(4, 2, 8, 0.9);
+    padding: 20px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+    overflow-y: auto;
+}
+
+.menu-container.active {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.menu-content {
+    width: 100%;
+    max-width: 520px;
+    margin: auto;
+    padding: 40px;
+    text-align: center;
+    border-top: 3px solid var(--magenta);
+    border-bottom: 3px solid var(--cyan);
+}
+
+.logo {
+    font-family: 'Orbitron', sans-serif;
+    font-weight: 900;
+    font-size: 2.6rem;
+    letter-spacing: 3px;
+    margin-bottom: 8px;
+}
+
+.subtitle {
+    font-size: 1.15rem;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 24px;
+}
+
+/* Campaign Dashboard Layout */
+.dashboard {
+    width: 100%;
+    max-width: 900px;
+    margin: auto;
+    padding: 30px;
+    border-top: 3px solid var(--magenta);
+    border-bottom: 3px solid var(--cyan);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+/* Mission Select Cards Grid */
+.mission-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    width: 100%;
+    margin: 20px 0;
+}
+
+.mission-card {
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 6px;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    cursor: default;
+    transition: all 0.25s ease;
+}
+
+.mission-card.active-card {
+    border-color: rgba(255, 0, 85, 0.3);
+    cursor: pointer;
+}
+
+.mission-card.active-card:hover {
+    background: rgba(255, 0, 85, 0.04);
+    transform: translateY(-4px);
+    border-color: var(--magenta);
+    box-shadow: 0 4px 12px rgba(255, 0, 85, 0.15);
+}
+
+.mission-card.selected {
+    border-color: var(--cyan);
+    background: rgba(0, 240, 255, 0.05);
+    box-shadow: 0 0 15px rgba(0, 240, 255, 0.2);
+}
+
+.mission-card.selected:hover {
+    background: rgba(0, 240, 255, 0.06);
+    border-color: var(--cyan);
+    box-shadow: 0 0 15px rgba(0, 240, 255, 0.3);
+}
+
+.mission-card.locked-card {
+    opacity: 0.45;
+}
+
+.card-num {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 1.5rem;
+    font-weight: 900;
+}
+
+.card-title {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 1rem;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    color: #fff;
+}
+
+.card-desc {
+    font-size: 0.8rem;
+    color: rgba(226, 222, 242, 0.6);
+    line-height: 1.3;
+    flex-grow: 1;
+}
+
+.card-status {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 0.75rem;
+    font-weight: 700;
+    margin-top: 6px;
+}
+
+/* Selected Info Pane */
+#mission-info-pane {
+    width: 100%;
+    padding: 20px;
+    margin-top: 15px;
+    border-left: 3px solid var(--cyan);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+}
+
+#mission-info-pane h3 {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 1.15rem;
+    letter-spacing: 1px;
+    width: 100%;
+    text-align: left;
+}
+
+#mission-info-pane p {
+    font-size: 0.95rem;
+    line-height: 1.45;
+    color: rgba(226, 222, 242, 0.8);
+    width: 100%;
+    text-align: left;
+}
+
+/* Button layout group and properties */
+.btn-group {
+    display: flex;
+    gap: 16px;
+    justify-content: center;
+    width: 100%;
+    margin-top: 20px;
+}
+
+.btn {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 1rem;
+    font-weight: 700;
+    padding: 10px 30px;
+    border-radius: 4px;
+    border: none;
+    cursor: pointer;
+    background: transparent;
+    transition: all 0.25s ease;
+    letter-spacing: 2px;
+}
+
+.glow-magenta-btn {
+    color: #fff;
+    border: 2px solid var(--magenta);
+    box-shadow: 0 0 8px var(--magenta-glow);
+    background-image: linear-gradient(45deg, rgba(255,0,85,0.08), rgba(255,0,85,0.2));
+}
+
+.glow-magenta-btn:hover {
+    background-color: var(--magenta);
+    box-shadow: 0 0 16px var(--magenta), 0 0 32px var(--magenta-glow);
+    text-shadow: 0 0 6px #fff;
+}
+
+.glow-green-btn {
+    color: #fff;
+    border: 2px solid var(--green);
+    box-shadow: 0 0 8px var(--green-glow);
+    background-image: linear-gradient(45deg, rgba(57, 255, 20, 0.08), rgba(57, 255, 20, 0.2));
+}
+
+.glow-green-btn:hover {
+    background-color: var(--green);
+    color: #000;
+    box-shadow: 0 0 16px var(--green), 0 0 32px var(--green-glow);
+    font-weight: 900;
+}
+
+.glow-red-btn {
+    color: #fff;
+    border: 2px solid var(--red);
+    box-shadow: 0 0 8px var(--red-glow);
+    background-image: linear-gradient(45deg, rgba(255, 34, 34, 0.08), rgba(255, 34, 34, 0.2));
+}
+
+.glow-red-btn:hover {
+    background-color: var(--red);
+    box-shadow: 0 0 16px var(--red), 0 0 32px var(--red-glow);
+    text-shadow: 0 0 6px #fff;
+}
+
+/* Controls Strip help info */
+.controls-guide-strip {
+    font-size: 0.82rem;
+    color: rgba(226, 222, 242, 0.5);
+    margin-top: 15px;
+    letter-spacing: 1px;
+}
+
+.key-inline {
+    background-color: var(--cyan);
+    color: #000;
+    font-family: 'Orbitron', sans-serif;
+    font-weight: 700;
+    padding: 0px 5px;
+    border-radius: 3px;
+    margin: 0 4px;
+    font-size: 0.75rem;
+    box-shadow: 0 0 4px var(--cyan-glow);
+}
+
+/* Game Over Stats List */
+.stats-summary {
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 6px;
+    padding: 20px;
+    margin: 15px 0 25px 0;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.summary-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 1.1rem;
+    font-weight: 700;
+    min-width: 320px;
+}
+
+.summary-row .value {
+    font-family: 'Orbitron', sans-serif;
+}
+
+/* Animations */
+@keyframes blink {
+    from { opacity: 0.4; }
+    to { opacity: 1; }
+}
+
+.animate-fade-in {
+    animation: fadeIn 0.4s ease-out forwards;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: scale(0.96); }
+    to { opacity: 1; transform: scale(1); }
+}
+
+/* Weapon Selector */
+.weapon-card {
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 6px;
+    padding: 16px;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    text-align: left;
+}
+.weapon-card:hover {
+    background: rgba(0, 240, 255, 0.04);
+    border-color: var(--cyan);
+}
+.weapon-card.selected {
+    border-color: var(--cyan);
+    background: rgba(0, 240, 255, 0.1);
+    box-shadow: 0 0 15px rgba(0, 240, 255, 0.2);
+}
+.weapon-card .w-title {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: var(--cyan);
+    margin-bottom: 6px;
+}
+.weapon-card .w-desc {
+    font-size: 0.8rem;
+    color: rgba(226, 222, 242, 0.6);
+}
+
+/* Mobile Touch Controls */
+#touch-controls {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    pointer-events: none;
+    z-index: 1000;
+}
+#touch-controls:not(.hidden) {
+    pointer-events: auto;
+}
+#touch-joystick-zone {
+    position: absolute;
+    bottom: 20px;
+    left: 20px;
+    width: 200px;
+    height: 200px;
+}
+#touch-joystick-base {
+    position: absolute;
+    bottom: 0; left: 0;
+    width: 140px; height: 140px;
+    border-radius: 50%;
+    background: rgba(0, 255, 255, 0.1);
+    border: 2px solid rgba(0, 255, 255, 0.3);
+    display: flex; align-items: center; justify-content: center;
+}
+#touch-joystick-stick {
+    width: 60px; height: 60px;
+    border-radius: 50%;
+    background: rgba(0, 255, 255, 0.5);
+    transform: translate(0px, 0px);
+}
+#touch-actions {
+    position: absolute;
+    bottom: 20px;
+    right: 20px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+    width: 200px;
+}
+.touch-btn {
+    background: rgba(255, 0, 85, 0.2);
+    border: 2px solid rgba(255, 0, 85, 0.5);
+    border-radius: 50%;
+    color: white;
+    font-family: 'Orbitron', sans-serif;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    user-select: none;
+}
+#btn-touch-fire {
+    width: 90px; height: 90px;
+    grid-column: span 2;
+    margin-left: auto; margin-right: 0;
+    font-size: 20px; font-weight: bold;
+    background: rgba(255, 0, 85, 0.4);
+}
+#btn-touch-jump, #btn-touch-reload, #btn-touch-scope, #btn-touch-swap {
+    width: 70px; height: 70px;
+}

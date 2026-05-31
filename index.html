@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aaryavaa's Dojo - Cyberpunk 3D FPS</title>
+    <link rel="stylesheet" href="style.css?v=2">
+    <!-- Google Fonts for premium sci-fi typography -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@500;700&display=swap" rel="stylesheet">
+    <!-- Three.js Library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+</head>
+<body>
+    <div id="game-container">
+        <!-- The WebGL 3D Canvas -->
+        <canvas id="game-canvas"></canvas>
+
+        <!-- Dynamic Reticle / Crosshair -->
+        <div id="crosshair" class="hidden">
+            <div class="line top"></div>
+            <div class="line right"></div>
+            <div class="line bottom"></div>
+            <div class="line left"></div>
+            <div class="center-dot"></div>
+        </div>
+
+        <!-- Scope Zoom Overlay -->
+        <div id="scope-overlay" class="hidden">
+            <div class="scope-ring">
+                <div class="scope-cross-h"></div>
+                <div class="scope-cross-v"></div>
+                <div class="scope-lens-glow"></div>
+            </div>
+            <div class="scope-mask left-mask"></div>
+            <div class="scope-mask right-mask"></div>
+        </div>
+
+        <!-- In-game HUD overlay -->
+        <div id="hud" class="hidden">
+            <!-- Top Bar: Mission Info & Objectives -->
+            <div class="hud-top-bar glass">
+                <div class="hud-stat">
+                    <span class="label">MISSION</span>
+                    <span id="mission-title-val" class="value glow-magenta">GRID ENTRY</span>
+                </div>
+                <div class="hud-stat">
+                    <span class="label">SCORE</span>
+                    <span id="score-val" class="value glow-green">00000</span>
+                </div>
+            </div>
+
+            <!-- Top Left: Live Objective Tracker -->
+            <div id="objectives-panel" class="glass">
+                <div class="panel-header glow-cyan">MISSION OBJECTIVES</div>
+                <ul id="objectives-list">
+                    <!-- Dynamic objectives will be injected here -->
+                </ul>
+            </div>
+
+            <!-- Bottom Left: Health & Armor -->
+            <div class="hud-bottom-left glass">
+                <div class="hud-bar-container">
+                    <div class="hud-bar-label">
+                        <span>HEALTH</span>
+                        <span id="health-num">100</span>
+                    </div>
+                    <div class="hud-bar-bg">
+                        <div id="health-fill" class="hud-bar-fill fill-green" style="width: 100%;"></div>
+                    </div>
+                </div>
+                <div class="hud-bar-container margin-top">
+                    <div class="hud-bar-label">
+                        <span>ARMOR</span>
+                        <span id="armor-num">100</span>
+                    </div>
+                    <div class="hud-bar-bg">
+                        <div id="armor-fill" class="hud-bar-fill fill-cyan" style="width: 100%;"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Bottom Right: Ammo & Weapon -->
+            <div class="hud-bottom-right glass">
+                <div class="weapon-info">
+                    <div class="weapon-name glow-cyan">CYBER RIFLE-1.5</div>
+                    <div class="fire-mode">BURST LASER / ACCURATE</div>
+                </div>
+                <div class="ammo-display">
+                    <span id="ammo-clip" class="clip-value">30</span>
+                    <span class="separator">/</span>
+                    <span id="ammo-reserve" class="reserve-value">90</span>
+                </div>
+                <div id="reload-indicator" class="hidden">
+                    <div class="reload-text glow-magenta">RELOADING</div>
+                    <div class="reload-bar-bg">
+                        <div id="reload-bar-fill" class="reload-bar-fill"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Middle Bottom: Movement State Feed -->
+            <div class="hud-movement-feed glass">
+                <span id="move-state" class="state-val">STANDING</span>
+                <span id="accuracy-val" class="accuracy-pct glow-green">ACCURACY: 100%</span>
+            </div>
+
+            <!-- Bottom Center: Ability Status -->
+            <div class="hud-ability glass" style="position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; min-width: 200px; padding: 10px 20px;">
+                <div id="ability-name" class="glow-cyan" style="font-weight: 700; font-size: 1.2rem; letter-spacing: 1px; margin-bottom: 5px;">MEDIC</div>
+                <div id="ability-status" class="glow-green" style="font-family: 'Orbitron'; font-size: 1.5rem;">READY (PRESS 5)</div>
+            </div>
+        </div>
+
+        <!-- Main Dashboard Overlay (Mission Select + Guide) -->
+        <div id="menu-overlay" class="menu-container active">
+            <div class="dashboard glass animate-fade-in">
+                <h1 class="logo glow-magenta">Aaryavaa's Dojo</h1>
+                <p class="subtitle glow-cyan">Project Redline Story Campaign</p>
+                <p class="credits" style="color: #88aaff; font-family: 'Rajdhani', sans-serif; margin-bottom: 20px; font-weight: 700; font-size: 1.1rem; text-transform: uppercase; letter-spacing: 2px;">Created by: Aaryav Pathak & Dhurv Parekh</p>
+
+                <!-- Mission Cards Grid -->
+                <div class="mission-grid">
+                    <!-- Mission 1 -->
+                    <div id="card-m1" class="mission-card active-card" data-mission="1">
+                        <div class="card-num glow-magenta">01</div>
+                        <div class="card-title">GRID ENTRY</div>
+                        <p class="card-desc">Rogue scout drones have overrun the perimeter. Clear out all scouts to secure the area.</p>
+                        <div class="card-status glow-green">UNLOCKED</div>
+                    </div>
+                    <!-- Mission 2 -->
+                    <div id="card-m2" class="mission-card locked-card" data-mission="2">
+                        <div class="card-num glow-magenta">02</div>
+                        <div class="card-title">SILENT CRYPT</div>
+                        <p class="card-desc">Bypass the security matrix. Defense turrets fire on sprint signatures. Walk silently or crouch to pass.</p>
+                        <div class="card-status glow-red">LOCKED</div>
+                    </div>
+                    <!-- Mission 3 -->
+                    <div id="card-m3" class="mission-card locked-card" data-mission="3">
+                        <div class="card-num glow-magenta">03</div>
+                        <div class="card-title">THE ASCENT</div>
+                        <p class="card-desc">Scale the floating high-altitude signal platforms. Jump upward to destroy the broadcast beacons.</p>
+                        <div class="card-status glow-red">LOCKED</div>
+                    </div>
+                    <!-- Mission 4 -->
+                    <div id="card-m4" class="mission-card locked-card" data-mission="4">
+                        <div class="card-num glow-magenta">04</div>
+                        <div class="card-title">SINGULARITY CORE</div>
+                        <p class="card-desc">Enter the central AI reactor and destroy the singularity core. Dodge dense laser waves.</p>
+                        <div class="card-status glow-red">LOCKED</div>
+                    </div>
+                    <!-- Mission 5 -->
+                    <div id="card-m5" class="mission-card locked-card" data-mission="5">
+                        <div class="card-num glow-magenta">05</div>
+                        <div class="card-title">LASER GRID</div>
+                        <p class="card-desc">Navigate a dense maze of active lasers and eliminate 12 agile scout drones.</p>
+                        <div class="card-status glow-red">LOCKED</div>
+                    </div>
+                    <!-- Mission 6 -->
+                    <div id="card-m6" class="mission-card locked-card" data-mission="6">
+                        <div class="card-num glow-magenta">06</div>
+                        <div class="card-title">TURRET ALLEY</div>
+                        <p class="card-desc">A long corridor heavily defended by 8 turrets. Walk/crouch carefully to survive.</p>
+                        <div class="card-status glow-red">LOCKED</div>
+                    </div>
+                    <!-- Mission 7 -->
+                    <div id="card-m7" class="mission-card locked-card" data-mission="7">
+                        <div class="card-num glow-magenta">07</div>
+                        <div class="card-title">SHADOW REALM</div>
+                        <p class="card-desc">Destroy 5 signal beacons scattered in the dark, guarded by 10 fast drones.</p>
+                        <div class="card-status glow-red">LOCKED</div>
+                    </div>
+                    <!-- Mission 8 -->
+                    <div id="card-m8" class="mission-card locked-card" data-mission="8">
+                        <div class="card-num glow-magenta">08</div>
+                        <div class="card-title">SKY FALL</div>
+                        <p class="card-desc">Scale a series of very high floating platforms while dodging fast aerial drones.</p>
+                        <div class="card-status glow-red">LOCKED</div>
+                    </div>
+                    <!-- Mission 9 -->
+                    <div id="card-m9" class="mission-card locked-card" data-mission="9">
+                        <div class="card-num glow-magenta">09</div>
+                        <div class="card-title">THE TWINS</div>
+                        <p class="card-desc">A brutal boss battle against two heavily shielded Singularity Cores simultaneously.</p>
+                        <div class="card-status glow-red">LOCKED</div>
+                    </div>
+                    <!-- Mission 10 -->
+                    <div id="card-m10" class="mission-card locked-card" data-mission="10">
+                        <div class="card-num glow-magenta">10</div>
+                        <div class="card-title">AARYAV'S WRATH</div>
+                        <p class="card-desc">The ultimate endurance run. Survive 20 drones, 4 turrets, and the final Boss Core.</p>
+                        <div class="card-status glow-red">LOCKED</div>
+                    </div>
+
+                    <!-- Divider -->
+                    <div style="grid-column: 1 / -1; margin-top: 20px; border-top: 2px dashed var(--magenta); padding-top: 20px; text-align: center;">
+                        <h2 class="glow-magenta" style="font-family: 'Orbitron'; font-size: 1.5rem; letter-spacing: 3px; margin: 0;">NIGHTMARE PROTOCOL</h2>
+                        <p class="glow-red" style="font-size: 0.9rem; margin-top: 5px;">Extreme Threat Level - Proceed with Caution</p>
+                    </div>
+
+                    <!-- Mission 11 -->
+                    <div id="card-m11" class="mission-card locked-card" data-mission="11">
+                        <div class="card-num glow-magenta">11</div>
+                        <div class="card-title">NIGHTMARE 11</div>
+                        <p class="card-desc">Extreme threat level. Overwhelming enemy presence.</p>
+                        <div class="card-status glow-red">LOCKED</div>
+                    </div>                    <!-- Mission 12 -->
+                    <div id="card-m12" class="mission-card locked-card" data-mission="12">
+                        <div class="card-num glow-magenta">12</div>
+                        <div class="card-title">NIGHTMARE 12</div>
+                        <p class="card-desc">Extreme threat level. Overwhelming enemy presence.</p>
+                        <div class="card-status glow-red">LOCKED</div>
+                    </div>                    <!-- Mission 13 -->
+                    <div id="card-m13" class="mission-card locked-card" data-mission="13">
+                        <div class="card-num glow-magenta">13</div>
+                        <div class="card-title">NIGHTMARE 13</div>
+                        <p class="card-desc">Extreme threat level. Overwhelming enemy presence.</p>
+                        <div class="card-status glow-red">LOCKED</div>
+                    </div>                    <!-- Mission 14 -->
+                    <div id="card-m14" class="mission-card locked-card" data-mission="14">
+                        <div class="card-num glow-magenta">14</div>
+                        <div class="card-title">NIGHTMARE 14</div>
+                        <p class="card-desc">Extreme threat level. Overwhelming enemy presence.</p>
+                        <div class="card-status glow-red">LOCKED</div>
+                    </div>                    <!-- Mission 15 -->
+                    <div id="card-m15" class="mission-card locked-card" data-mission="15">
+                        <div class="card-num glow-magenta">15</div>
+                        <div class="card-title">NIGHTMARE 15</div>
+                        <p class="card-desc">Extreme threat level. Overwhelming enemy presence.</p>
+                        <div class="card-status glow-red">LOCKED</div>
+                    </div>                    <!-- Mission 16 -->
+                    <div id="card-m16" class="mission-card locked-card" data-mission="16">
+                        <div class="card-num glow-magenta">16</div>
+                        <div class="card-title">NIGHTMARE 16</div>
+                        <p class="card-desc">Extreme threat level. Overwhelming enemy presence.</p>
+                        <div class="card-status glow-red">LOCKED</div>
+                    </div>                    <!-- Mission 17 -->
+                    <div id="card-m17" class="mission-card locked-card" data-mission="17">
+                        <div class="card-num glow-magenta">17</div>
+                        <div class="card-title">NIGHTMARE 17</div>
+                        <p class="card-desc">Extreme threat level. Overwhelming enemy presence.</p>
+                        <div class="card-status glow-red">LOCKED</div>
+                    </div>                    <!-- Mission 18 -->
+                    <div id="card-m18" class="mission-card locked-card" data-mission="18">
+                        <div class="card-num glow-magenta">18</div>
+                        <div class="card-title">NIGHTMARE 18</div>
+                        <p class="card-desc">Extreme threat level. Overwhelming enemy presence.</p>
+                        <div class="card-status glow-red">LOCKED</div>
+                    </div>                    <!-- Mission 19 -->
+                    <div id="card-m19" class="mission-card locked-card" data-mission="19">
+                        <div class="card-num glow-magenta">19</div>
+                        <div class="card-title">NIGHTMARE 19</div>
+                        <p class="card-desc">Extreme threat level. Overwhelming enemy presence.</p>
+                        <div class="card-status glow-red">LOCKED</div>
+                    </div>                    <!-- Mission 20 -->
+                    <div id="card-m20" class="mission-card locked-card" data-mission="20">
+                        <div class="card-num glow-magenta">20</div>
+                        <div class="card-title">NIGHTMARE 20</div>
+                        <p class="card-desc">Extreme threat level. Overwhelming enemy presence.</p>
+                        <div class="card-status glow-red">LOCKED</div>
+                    </div>                    <!-- Mission 21 -->
+                    <div id="card-m21" class="mission-card locked-card" data-mission="21">
+                        <div class="card-num glow-magenta">21</div>
+                        <div class="card-title">NIGHTMARE 21</div>
+                        <p class="card-desc">Extreme threat level. Overwhelming enemy presence.</p>
+                        <div class="card-status glow-red">LOCKED</div>
+                    </div>                    <!-- Mission 22 -->
+                    <div id="card-m22" class="mission-card locked-card" data-mission="22">
+                        <div class="card-num glow-magenta">22</div>
+                        <div class="card-title">NIGHTMARE 22</div>
+                        <p class="card-desc">Extreme threat level. Overwhelming enemy presence.</p>
+                        <div class="card-status glow-red">LOCKED</div>
+                    </div>                    <!-- Mission 23 -->
+                    <div id="card-m23" class="mission-card locked-card" data-mission="23">
+                        <div class="card-num glow-magenta">23</div>
+                        <div class="card-title">NIGHTMARE 23</div>
+                        <p class="card-desc">Extreme threat level. Overwhelming enemy presence.</p>
+                        <div class="card-status glow-red">LOCKED</div>
+                    </div>                    <!-- Mission 24 -->
+                    <div id="card-m24" class="mission-card locked-card" data-mission="24">
+                        <div class="card-num glow-magenta">24</div>
+                        <div class="card-title">NIGHTMARE 24</div>
+                        <p class="card-desc">Extreme threat level. Overwhelming enemy presence.</p>
+                        <div class="card-status glow-red">LOCKED</div>
+                    </div>                    <!-- Mission 25 -->
+                    <div id="card-m25" class="mission-card locked-card" data-mission="25">
+                        <div class="card-num glow-magenta">25</div>
+                        <div class="card-title">NIGHTMARE 25</div>
+                        <p class="card-desc">Extreme threat level. Overwhelming enemy presence.</p>
+                        <div class="card-status glow-red">LOCKED</div>
+                    </div>
+                </div> <!-- Close mission-grid -->
+
+                <!-- Weapon Armory Selector -->
+                <div style="width: 100%; margin-top: 20px; padding-top: 20px;">
+                    <h3 style="font-family: 'Orbitron'; color: var(--magenta); text-align: left; margin-bottom: 15px; letter-spacing: 2px;">SELECT WEAPON LOADOUT</h3>
+                    <div style="display: flex; gap: 15px; margin-bottom: 20px;">
+                        <button id="btn-target-primary" class="btn" style="flex: 1; border: 2px solid var(--magenta); background: rgba(255, 0, 85, 0.2); color: #fff;" onclick="setTargetSlot(1)">Set Primary (1)</button>
+                        <button id="btn-target-secondary" class="btn" style="flex: 1; border: 2px solid var(--cyan); background: transparent; color: #fff;" onclick="setTargetSlot(2)">Set Secondary (2)</button>
+                    </div>
+                    <div id="weapon-grid" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px;">
+                        <div class="weapon-card selected" data-weapon="MP5" onclick="selectWeapon('MP5')">
+                            <div class="w-title">MP5</div>
+                            <div class="w-desc">High fire rate, low recoil. Balanced SMG.</div>
+                        </div>
+                        <div class="weapon-card" data-weapon="UMP" onclick="selectWeapon('UMP')">
+                            <div class="w-title">UMP</div>
+                            <div class="w-desc">High mobility, good armor penetration.</div>
+                        </div>
+                        <div class="weapon-card" data-weapon="AK47" onclick="selectWeapon('AK47')">
+                            <div class="w-title">AK47</div>
+                            <div class="w-desc">High damage Assault Rifle, heavy recoil.</div>
+                        </div>
+                        <div class="weapon-card" data-weapon="AWM" onclick="selectWeapon('AWM')">
+                            <div class="w-title">AWM</div>
+                            <div class="w-desc">Bolt-action Sniper. Devastating damage.</div>
+                        </div>
+                        <div class="weapon-card" data-weapon="CyberRifle" onclick="selectWeapon('CyberRifle')">
+                            <div class="w-title">Cyber Rifle</div>
+                            <div class="w-desc">Sci-fi auto rifle. Balanced and precise.</div>
+                        </div>
+                        <div class="weapon-card" data-weapon="PlasmaShotgun" onclick="selectWeapon('PlasmaShotgun')">
+                            <div class="w-title">Plasma Shotgun</div>
+                            <div class="w-desc">Fires 8 plasma pellets. High close-range burst.</div>
+                        </div>
+                        <div class="weapon-card" data-weapon="PulseSniper" onclick="selectWeapon('PulseSniper')">
+                            <div class="w-title">Pulse Sniper</div>
+                            <div class="w-desc">Perfect accuracy energy railgun. Huge damage.</div>
+                        </div>
+                        <div class="weapon-card" data-weapon="NeonSMG" onclick="selectWeapon('NeonSMG')">
+                            <div class="w-title">Neon SMG</div>
+                            <div class="w-desc">Ultra-fast firing speed, low recoil.</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Ability Selector -->
+                <div style="width: 100%; margin-top: 20px; padding-top: 20px; border-top: 1px solid rgba(0, 255, 255, 0.2);">
+                    <h3 style="font-family: 'Orbitron'; color: var(--magenta); text-align: left; margin-bottom: 15px; letter-spacing: 2px;">SELECT CHARACTER ABILITY (PRESS 5 TO USE)</h3>
+                    <div id="ability-grid" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px;">
+                        <div class="weapon-card selected" data-ability="Medic" onclick="selectAbility('Medic')">
+                            <div class="w-title">Medic</div>
+                            <div class="w-desc">Aura: Speed boost + Heal over time.</div>
+                        </div>
+                        <div class="weapon-card" data-ability="Guardian" onclick="selectAbility('Guardian')">
+                            <div class="w-title">Guardian</div>
+                            <div class="w-desc">Force Field: Deploys a shield bubble.</div>
+                        </div>
+                        <div class="weapon-card" data-ability="Phantom" onclick="selectAbility('Phantom')">
+                            <div class="w-title">Phantom</div>
+                            <div class="w-desc">Camouflage: Become invisible to enemies.</div>
+                        </div>
+                        <div class="weapon-card" data-ability="Runner" onclick="selectAbility('Runner')">
+                            <div class="w-title">Runner</div>
+                            <div class="w-desc">Dash: Passive sprint speed increase.</div>
+                        </div>
+                        <div class="weapon-card" data-ability="Striker" onclick="selectAbility('Striker')">
+                            <div class="w-title">Striker</div>
+                            <div class="w-desc">Riptide: Destructive sonic wave attack.</div>
+                        </div>
+                        <div class="weapon-card" data-ability="Survivor" onclick="selectAbility('Survivor')">
+                            <div class="w-title">Survivor</div>
+                            <div class="w-desc">Regen: Passive constant slow healing.</div>
+                        </div>
+                        <div class="weapon-card" data-ability="Berserker" onclick="selectAbility('Berserker')">
+                            <div class="w-title">Berserker</div>
+                            <div class="w-desc">Bushido: Deal more damage when HP is low.</div>
+                        </div>
+                        <div class="weapon-card" data-ability="Vampire" onclick="selectAbility('Vampire')">
+                            <div class="w-title">Vampire</div>
+                            <div class="w-desc">Siphon: Heal instantly upon killing enemies.</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Brief controls help summary -->
+                <div class="controls-guide-strip" style="font-size: 0.8rem; margin-top: 10px;">
+                    <span><span class="key-inline">W</span><span class="key-inline">A</span><span class="key-inline">S</span><span class="key-inline">D</span> Move</span> |
+                    <span><span class="key-inline">SHIFT</span> Walk</span> |
+                    <span><span class="key-inline">CTRL</span> Crouch</span> |
+                    <span><span class="key-inline">SPACE</span> Jump</span> |
+                    <span><span class="key-inline">1/2</span> Swap Wpn</span> |
+                    <span><span class="key-inline">3</span> Melee</span> |
+                    <span><span class="key-inline">4</span> Grenade</span> |
+                    <span><span class="key-inline">5</span> Ability</span>
+                </div>
+
+                <!-- Selected Mission Details Pane -->
+                <div id="mission-info-pane" class="glass">
+                    <h3 id="selected-title" class="glow-cyan">MISSION 1: GRID ENTRY</h3>
+                    <p id="selected-story">Rogue AI scout drones have breached Sector 7's perimeter. Re-establish telemetry signals by eliminating all hostile scouts. Use standard counter-strafing techniques to retain accuracy while moving.</p>
+                    <button id="btn-play" class="btn glow-magenta-btn">INITIALIZE SYSTEM</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Mission Completed Overlay -->
+        <div id="mission-complete-overlay" class="menu-container hidden">
+            <div class="menu-content glass">
+                <h1 class="logo glow-green">MISSION COMPLETED</h1>
+                <p class="subtitle glow-green" id="complete-subtitle">SECTOR TELEMETRY SECURED</p>
+                
+                <div class="stats-summary">
+                    <div class="summary-row">
+                        <span>MISSION COMPLETED:</span>
+                        <span id="complete-mission-name" class="value glow-magenta">GRID ENTRY</span>
+                    </div>
+                    <div class="summary-row">
+                        <span>XP RECOVERY:</span>
+                        <span id="complete-xp" class="value glow-cyan">+1,200 XP</span>
+                    </div>
+                    <div class="summary-row">
+                        <span>FINAL SCORE:</span>
+                        <span id="complete-score" class="value glow-green">00000</span>
+                    </div>
+                </div>
+
+                <div class="btn-group">
+                    <button id="btn-next-mission" class="btn glow-green-btn">NEXT MISSION</button>
+                    <button id="btn-menu" class="btn glow-magenta-btn">MAIN MENU</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Game Over Overlay -->
+        <div id="game-over-overlay" class="menu-container hidden">
+            <div class="menu-content glass">
+                <h1 class="logo glow-red">CONNECTION LOST</h1>
+                <p class="subtitle glow-red">SYSTEM OVERRUN BY AI DEFENSER</p>
+                
+                <div class="stats-summary">
+                    <div class="summary-row">
+                        <span>FAILED MISSION:</span>
+                        <span id="summary-mission-name" class="value glow-magenta">GRID ENTRY</span>
+                    </div>
+                    <div class="summary-row">
+                        <span>SCORE ACQUIRED:</span>
+                        <span id="summary-score" class="value glow-green">00000</span>
+                    </div>
+                </div>
+
+                <div class="btn-group">
+                    <button id="btn-restart" class="btn glow-red-btn">REBOOT KERNEL</button>
+                    <button id="btn-menu-failed" class="btn glow-magenta-btn">MAIN MENU</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Script modules -->
+    <script src="audio.js"></script>
+    <script src="game.js?v=2"></script>
+</body>
+</html>
+
+
