@@ -38,10 +38,10 @@ const MISSIONS = {
         xp: 5000
     },
     5: {
-        title: "LASER GRID",
-        subtitle: "SCOUTS ELIMINATED",
-        story: "Navigate a dense maze of active lasers and eliminate 10 agile scout drones.",
-        xp: 3000
+        title: "OUTPOST INFILTRATION",
+        subtitle: "OUTPOST CLEARED",
+        story: "Infiltrate a heavily fortified enemy sentinel outpost. The sector security grid is defended by automatic sentry turrets and armed guards. Break through the defenses by neutralizing all sentinel forces.",
+        xp: 3500
     },
     6: {
         title: "TURRET ALLEY",
@@ -2154,25 +2154,34 @@ function fireBossRingLasers(boss) {
     }
 }
 
-// Mission 5: Laser Grid
+// Mission 5: Outpost Infiltration
 function setupMission5() {
     objectives = [
-        { type: 'drone', text: "Eliminate agile scout drones", count: 0, target: 10, completed: false },
+        { type: 'turret', text: "Destroy Outpost Turrets", count: 0, target: 6, completed: false },
+        { type: 'soldier', text: "Neutralize Armed Guards", count: 0, target: 6, completed: false }
     ];
 
-    const columnSpots = [];
-    for(let x=-20; x<=20; x+=10) {
-        for(let z=-20; z<=20; z+=10) {
-            if (x===0 && z===0) continue;
-            columnSpots.push([x, z]);
-        }
-    }
-    columnSpots.forEach(([x, z]) => spawnPillar(x, z, 0x00f0ff));
+    // Spawn outpost columns/walls (forms a defensive ring)
+    const wallPositions = [
+        [-15, -15], [-15, 15], [15, -15], [15, 15],
+        [0, -20], [0, 20]
+    ];
+    wallPositions.forEach(([x, z]) => spawnPillar(x, z, 0x00f0ff));
 
-    for (let i = 0; i < 10; i++) {
+    // Spawn 6 turrets guarding the outpost
+    const turretPositions = [
+        [-15, -10], [-15, 10], [15, -10], [15, 10],
+        [0, -15], [0, 15]
+    ];
+    turretPositions.forEach(([tx, tz]) => {
+        spawnTurret(tx, tz);
+    });
+
+    // Spawn 6 soldiers patrolling the perimeter
+    for (let i = 0; i < 6; i++) {
         const x = (Math.random() - 0.5) * 50;
         const z = (Math.random() - 0.5) * 50;
-        spawnDrone(x, 2 + Math.random()*3, z, 0.05, 0xff0055, 2500);
+        spawnSoldier(x, z);
     }
 }
 
