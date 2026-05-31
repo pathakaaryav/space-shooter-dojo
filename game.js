@@ -218,6 +218,14 @@ const STANDING_HEIGHT = 1.8;
 const CROUCH_HEIGHT = 0.95;
 let currentHeight = STANDING_HEIGHT;
 
+// Mobile touch controls variables
+let isMobile = false;
+let joystickVector = new THREE.Vector2();
+let joystickTouchId = null;
+let lookTouchId = null;
+let lastLookTouchX = 0;
+let lastLookTouchY = 0;
+
 // CS 1.5 Accuracy & Recoil factors
 let baseSpread = 0.002;
 let movementSpread = 0;
@@ -937,25 +945,52 @@ function spawnBeacon(x, y, z, id) {
 
 // Setup input listeners (keyboard, mouse look triggers)
 function setupInputListeners() {
+    isMobile = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+    if (isMobile) {
+        document.body.classList.add('touch-device');
+        document.getElementById('mobile-controls').classList.remove('hidden');
+        setupMobileTouchHandlers();
+    }
+
+    function enterMobileGameMode() {
+        isPlaying = true;
+        menuOverlay.classList.remove('active');
+        hud.classList.remove('hidden');
+        crosshair.classList.remove('hidden');
+        window.sounds.resume();
+    }
+
     btnPlay.addEventListener('click', () => {
         window.sounds.init();
         if (gameState !== 'PLAYING') {
             loadMissionLevel(currentMissionId);
         }
-        canvas.requestPointerLock();
+        if (isMobile) {
+            enterMobileGameMode();
+        } else {
+            canvas.requestPointerLock();
+        }
     });
 
     btnRestart.addEventListener('click', () => {
         window.sounds.init();
         loadMissionLevel(currentMissionId);
-        canvas.requestPointerLock();
+        if (isMobile) {
+            enterMobileGameMode();
+        } else {
+            canvas.requestPointerLock();
+        }
     });
 
     btnNextMission.addEventListener('click', () => {
         window.sounds.init();
-        currentMissionId = Math.min(10, currentMissionId + 1);
+        currentMissionId = Math.min(25, currentMissionId + 1);
         loadMissionLevel(currentMissionId);
-        canvas.requestPointerLock();
+        if (isMobile) {
+            enterMobileGameMode();
+        } else {
+            canvas.requestPointerLock();
+        }
     });
 
     btnMenu.addEventListener('click', () => {
@@ -982,10 +1017,12 @@ function setupInputListeners() {
             crosshair.classList.remove('hidden');
             window.sounds.resume();
         } else {
-            isPlaying = false;
-            // Go back to menu overlay if game is not over
-            if (gameState === 'PLAYING') {
-                showMenuDashboard();
+            if (!isMobile) {
+                isPlaying = false;
+                // Go back to menu overlay if game is not over
+                if (gameState === 'PLAYING') {
+                    showMenuDashboard();
+                }
             }
         }
     });
@@ -1480,7 +1517,7 @@ function completeMission() {
     missionCompleteOverlay.classList.add('active');
 
     // Hide Next Mission button if final mission completed
-    if (currentMissionId === 10) {
+    if (currentMissionId === 25) {
         btnNextMission.classList.add('hidden');
     } else {
         btnNextMission.classList.remove('hidden');
@@ -1801,6 +1838,12 @@ function updatePhysics(dt) {
     if (keys.s) moveDirection.z += 1;
     if (keys.a) moveDirection.x -= 1;
     if (keys.d) moveDirection.x += 1;
+
+    if (isMobile && joystickVector.lengthSq() > 0) {
+        moveDirection.x += joystickVector.x;
+        moveDirection.z += joystickVector.y;
+    }
+
     moveDirection.normalize();
 
     let maxSpeed = RUN_SPEED;
@@ -2721,4 +2764,231 @@ function setupMission22() { objectives = [{ type: 'boss', text: 'Destroy Cores',
 function setupMission23() { objectives = [{ type: 'drone', text: 'Doomsday Swarm', count: 0, target: 50, completed: false }]; for(let i=0; i<50; i++) spawnDrone(); for(let i=0; i<8; i++) spawnAmmoCrate(); updateMissionHUD(); }
 function setupMission24() { objectives = [{ type: 'soldier', text: 'Total Annihilation', count: 0, target: 40, completed: false }]; for(let i=0; i<40; i++) spawnSoldier(); for(let i=0; i<8; i++) spawnAmmoCrate(); updateMissionHUD(); }
 function setupMission25() { objectives = [{ type: 'boss', text: 'Destroy Boss Cores', count: 0, target: 5, completed: false }, { type: 'soldier', text: 'Kill Guards', count: 0, target: 20, completed: false }]; spawnCore(new THREE.Vector3(0, 5, -20)); spawnCore(new THREE.Vector3(20, 5, -20)); spawnCore(new THREE.Vector3(-20, 5, -20)); spawnCore(new THREE.Vector3(20, 5, 20)); spawnCore(new THREE.Vector3(-20, 5, 20)); for(let i=0; i<20; i++) spawnSoldier(); for(let i=0; i<10; i++) spawnAmmoCrate(); updateMissionHUD(); }
+
+function setupMobileTouchHandlers() {
+    const joystickZone = document.getElementById('joystick-zone');
+    const joystickBase = document.getElementById('joystick-base');
+    const joystickHandle = document.getElementById('joystick-handle');
+
+    let joystickCenterX = 0;
+    let joystickCenterY = 0;
+    const maxRadius = 40;
+
+    // Helper to calculate base center
+    function updateJoystickCenter() {
+        const rect = joystickBase.getBoundingClientRect();
+        joystickCenterX = rect.left + rect.width / 2;
+        joystickCenterY = rect.top + rect.height / 2;
+    }
+
+    joystickZone.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        updateJoystickCenter();
+        const touch = e.targetTouches[0];
+        joystickTouchId = touch.identifier;
+        moveJoystick(touch.clientX, touch.clientY);
+    }, { passive: false });
+
+    window.addEventListener('touchmove', (e) => {
+        if (joystickTouchId !== null) {
+            for (let i = 0; i < e.touches.length; i++) {
+                if (e.touches[i].identifier === joystickTouchId) {
+                    moveJoystick(e.touches[i].clientX, e.touches[i].clientY);
+                    break;
+                }
+            }
+        }
+    }, { passive: false });
+
+    window.addEventListener('touchend', (e) => {
+        if (joystickTouchId !== null) {
+            let found = false;
+            for (let i = 0; i < e.touches.length; i++) {
+                if (e.touches[i].identifier === joystickTouchId) {
+                    found = true;
+                    break;
+                }
+            }
+            if (!found) {
+                // Joystick touch ended
+                joystickTouchId = null;
+                joystickVector.set(0, 0);
+                joystickHandle.style.transform = 'translate(0px, 0px)';
+            }
+        }
+    });
+
+    function moveJoystick(clientX, clientY) {
+        let dx = clientX - joystickCenterX;
+        let dy = clientY - joystickCenterY;
+        let dist = Math.sqrt(dx*dx + dy*dy);
+        
+        if (dist > maxRadius) {
+            dx = (dx / dist) * maxRadius;
+            dy = (dy / dist) * maxRadius;
+            dist = maxRadius;
+        }
+
+        joystickHandle.style.transform = `translate(${dx}px, ${dy}px)`;
+        joystickVector.set(dx / maxRadius, dy / maxRadius);
+    }
+
+    // Right side touch-to-look handler
+    window.addEventListener('touchstart', (e) => {
+        if (gameState !== 'PLAYING' || !isPlaying) return;
+
+        for (let i = 0; i < e.changedTouches.length; i++) {
+            const touch = e.changedTouches[i];
+            
+            // Check if touch is on right half of screen
+            if (touch.clientX > window.innerWidth / 2) {
+                const isBtn = touch.target.closest('#mobile-buttons-zone') || touch.target.closest('#joystick-zone');
+                if (!isBtn && lookTouchId === null) {
+                    lookTouchId = touch.identifier;
+                    lastLookTouchX = touch.clientX;
+                    lastLookTouchY = touch.clientY;
+                }
+            }
+        }
+    });
+
+    window.addEventListener('touchmove', (e) => {
+        if (lookTouchId !== null) {
+            for (let i = 0; i < e.touches.length; i++) {
+                const touch = e.touches[i];
+                if (touch.identifier === lookTouchId) {
+                    let dx = touch.clientX - lastLookTouchX;
+                    let dy = touch.clientY - lastLookTouchY;
+                    lastLookTouchX = touch.clientX;
+                    lastLookTouchY = touch.clientY;
+
+                    // Touch sensitivity
+                    let touchSensitivity = 0.0035;
+                    if (isScoped) {
+                        touchSensitivity = 0.0015;
+                    }
+
+                    yaw -= dx * touchSensitivity;
+                    pitch -= dy * touchSensitivity;
+                    pitch = Math.max(-Math.PI / 2 + 0.05, Math.min(Math.PI / 2 - 0.05, pitch));
+
+                    player.rotation.y = yaw;
+                    camera.rotation.x = pitch;
+                    break;
+                }
+            }
+        }
+    });
+
+    window.addEventListener('touchend', (e) => {
+        if (lookTouchId !== null) {
+            let found = false;
+            for (let i = 0; i < e.touches.length; i++) {
+                if (e.touches[i].identifier === lookTouchId) {
+                    found = true;
+                    break;
+                }
+            }
+            if (!found) {
+                lookTouchId = null;
+            }
+        }
+    });
+
+    // Touch Buttons action triggers
+    const btnPause = document.getElementById('btn-pause-mobile');
+    const btnReload = document.getElementById('btn-reload-mobile');
+    const btnSwap = document.getElementById('btn-swap-mobile');
+    const btnCrouch = document.getElementById('btn-crouch-mobile');
+    const btnMelee = document.getElementById('btn-melee-mobile');
+    const btnGrenade = document.getElementById('btn-grenade-mobile');
+    const btnAbility = document.getElementById('btn-ability-mobile');
+    const btnScope = document.getElementById('btn-scope-mobile');
+    const btnJump = document.getElementById('btn-jump-mobile');
+    const btnFire = document.getElementById('btn-fire-mobile');
+
+    btnPause.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        showMenuDashboard();
+    });
+
+    btnReload.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        reloadWeapon();
+    });
+
+    btnSwap.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        if (gameState === 'PLAYING') {
+            let targetActiveSlot = activeSlot === 1 ? 2 : 1;
+            if (targetActiveSlot === 1) {
+                ammoClip2 = ammoClip;
+                activeSlot = 1;
+                selectedWeapon = primaryWeapon;
+                currentWeaponStats = WEAPON_STATS[selectedWeapon];
+                maxClip = currentWeaponStats.clip;
+                ammoClip = ammoClip1;
+                isReloading = false;
+                updateHUD();
+            } else {
+                ammoClip1 = ammoClip;
+                activeSlot = 2;
+                selectedWeapon = secondaryWeapon;
+                currentWeaponStats = WEAPON_STATS[selectedWeapon];
+                maxClip = currentWeaponStats.clip;
+                ammoClip = ammoClip2;
+                isReloading = false;
+                updateHUD();
+            }
+        }
+    });
+
+    btnCrouch.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        keys.ctrl = !keys.ctrl;
+        if (keys.ctrl) {
+            btnCrouch.classList.add('active');
+        } else {
+            btnCrouch.classList.remove('active');
+        }
+    });
+
+    btnMelee.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        meleeAttack();
+    });
+
+    btnGrenade.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        throwGrenade();
+    });
+
+    btnAbility.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        activateAbility();
+    });
+
+    btnScope.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        toggleScope();
+    });
+
+    btnJump.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        keys.space = true;
+    });
+    btnJump.addEventListener('touchend', (e) => {
+        e.preventDefault();
+        keys.space = false;
+    });
+
+    btnFire.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        isShooting = true;
+    });
+    btnFire.addEventListener('touchend', (e) => {
+        e.preventDefault();
+        isShooting = false;
+    });
+}
 

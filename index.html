@@ -445,6 +445,39 @@
                     <button id="btn-menu-failed" class="btn glow-magenta-btn">MAIN MENU</button>
                 </div>
             </div>
+        <!-- Mobile Touch Controls overlay -->
+        <div id="mobile-controls" class="hidden">
+            <!-- Left virtual joystick -->
+            <div id="joystick-zone">
+                <div id="joystick-base">
+                    <div id="joystick-handle"></div>
+                </div>
+            </div>
+            
+            <!-- Right touch buttons -->
+            <div id="mobile-buttons-zone">
+                <!-- Weapon slot & Reload & Crouch & Menu -->
+                <div class="mobile-button-row">
+                    <button id="btn-pause-mobile" class="mobile-action-btn glass-btn">MENU</button>
+                    <button id="btn-reload-mobile" class="mobile-action-btn glass-btn">RELOAD</button>
+                    <button id="btn-swap-mobile" class="mobile-action-btn glass-btn">SWAP SLOT</button>
+                    <button id="btn-crouch-mobile" class="mobile-action-btn glass-btn">CROUCH</button>
+                </div>
+                
+                <!-- Abilities, melee, grenade -->
+                <div class="mobile-button-row">
+                    <button id="btn-melee-mobile" class="mobile-action-btn glass-btn">MELEE</button>
+                    <button id="btn-grenade-mobile" class="mobile-action-btn glass-btn">GRENADE</button>
+                    <button id="btn-ability-mobile" class="mobile-action-btn glass-btn">ABILITY</button>
+                </div>
+
+                <!-- Jump & Fire main triggers -->
+                <div class="mobile-button-row main-triggers">
+                    <button id="btn-scope-mobile" class="mobile-action-btn main-btn glow-cyan-btn">AIM</button>
+                    <button id="btn-jump-mobile" class="mobile-action-btn main-btn glow-green-btn">JUMP</button>
+                    <button id="btn-fire-mobile" class="mobile-action-btn main-btn glow-magenta-btn">FIRE</button>
+                </div>
+            </div>
         </div>
     </div>
 

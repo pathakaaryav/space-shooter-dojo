@@ -800,49 +800,191 @@ body, html {
     width: 200px;
     height: 200px;
 }
-#touch-joystick-base {
+
+/* Mobile Controls Overlay Styles */
+#mobile-controls {
     position: absolute;
-    bottom: 0; left: 0;
-    width: 140px; height: 140px;
-    border-radius: 50%;
-    background: rgba(0, 255, 255, 0.1);
-    border: 2px solid rgba(0, 255, 255, 0.3);
-    display: flex; align-items: center; justify-content: center;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: 99;
+    pointer-events: none;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    padding: 30px;
 }
-#touch-joystick-stick {
-    width: 60px; height: 60px;
-    border-radius: 50%;
-    background: rgba(0, 255, 255, 0.5);
-    transform: translate(0px, 0px);
-}
-#touch-actions {
-    position: absolute;
-    bottom: 20px;
-    right: 20px;
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 15px;
-    width: 200px;
-}
-.touch-btn {
-    background: rgba(255, 0, 85, 0.2);
-    border: 2px solid rgba(255, 0, 85, 0.5);
-    border-radius: 50%;
-    color: white;
-    font-family: 'Orbitron', sans-serif;
-    font-size: 14px;
+
+#joystick-zone {
+    width: 180px;
+    height: 180px;
     display: flex;
     align-items: center;
     justify-content: center;
+    pointer-events: auto;
+}
+
+#joystick-base {
+    width: 130px;
+    height: 130px;
+    border-radius: 50%;
+    background: rgba(10, 5, 22, 0.4);
+    border: 2px solid rgba(0, 240, 255, 0.25);
+    box-shadow: 0 0 15px rgba(0, 240, 255, 0.1), inset 0 0 15px rgba(0, 240, 255, 0.05);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+}
+
+#joystick-handle {
+    width: 55px;
+    height: 55px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(0, 240, 255, 0.8) 0%, rgba(0, 160, 220, 0.5) 100%);
+    border: 2px solid var(--cyan);
+    box-shadow: 0 0 15px var(--cyan-glow);
+    position: absolute;
+    transition: transform 0.05s ease-out;
+}
+
+#mobile-buttons-zone {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    align-items: flex-end;
+    pointer-events: auto;
+    max-width: 450px;
+}
+
+.mobile-button-row {
+    display: flex;
+    gap: 12px;
+    justify-content: flex-end;
+}
+
+.mobile-action-btn {
+    font-family: 'Rajdhani', sans-serif;
+    font-weight: 700;
+    font-size: 0.85rem;
+    letter-spacing: 1px;
+    color: #ffffff;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.15s ease-in-out;
+    outline: none;
     user-select: none;
 }
-#btn-touch-fire {
-    width: 90px; height: 90px;
-    grid-column: span 2;
-    margin-left: auto; margin-right: 0;
-    font-size: 20px; font-weight: bold;
-    background: rgba(255, 0, 85, 0.4);
+
+.glass-btn {
+    background: rgba(10, 5, 22, 0.5);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    padding: 8px 16px;
+    height: 40px;
+    min-width: 90px;
 }
-#btn-touch-jump, #btn-touch-reload, #btn-touch-scope, #btn-touch-swap {
-    width: 70px; height: 70px;
+
+.glass-btn:active, .glass-btn.active {
+    background: rgba(255, 255, 255, 0.2);
+    border-color: #ffffff;
+    box-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
+}
+
+.main-triggers {
+    margin-top: 5px;
+    gap: 16px;
+}
+
+.main-btn {
+    border-radius: 50%;
+    width: 70px;
+    height: 70px;
+    font-family: 'Orbitron', sans-serif;
+    font-size: 0.95rem;
+    font-weight: 900;
+    border: 2px solid;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+}
+
+#btn-fire-mobile {
+    width: 90px;
+    height: 90px;
+    font-size: 1.15rem;
+    background: rgba(255, 0, 85, 0.25);
+    border-color: var(--magenta);
+    box-shadow: 0 0 15px var(--magenta-glow);
+}
+
+#btn-fire-mobile:active {
+    background: rgba(255, 0, 85, 0.6);
+    box-shadow: 0 0 25px var(--magenta);
+    transform: scale(0.95);
+}
+
+#btn-scope-mobile {
+    background: rgba(0, 240, 255, 0.15);
+    border-color: var(--cyan);
+    box-shadow: 0 0 12px var(--cyan-glow);
+}
+
+#btn-scope-mobile:active {
+    background: rgba(0, 240, 255, 0.5);
+    box-shadow: 0 0 20px var(--cyan);
+    transform: scale(0.95);
+}
+
+#btn-jump-mobile {
+    background: rgba(57, 255, 20, 0.15);
+    border-color: var(--green);
+    box-shadow: 0 0 12px var(--green-glow);
+}
+
+#btn-jump-mobile:active {
+    background: rgba(57, 255, 20, 0.5);
+    box-shadow: 0 0 20px var(--green);
+    transform: scale(0.95);
+}
+
+/* Hide guidance strip and adjust crosshair pointer actions for mobile touch compatibility */
+.touch-device #crosshair {
+    pointer-events: none;
+}
+
+@media (max-width: 800px) {
+    #mobile-controls {
+        padding: 15px;
+    }
+    #joystick-base {
+        width: 110px;
+        height: 110px;
+    }
+    #joystick-handle {
+        width: 45px;
+        height: 45px;
+    }
+    .main-btn {
+        width: 60px;
+        height: 60px;
+        font-size: 0.8rem;
+    }
+    #btn-fire-mobile {
+        width: 80px;
+        height: 80px;
+        font-size: 1rem;
+    }
+    .glass-btn {
+        padding: 6px 12px;
+        height: 36px;
+        min-width: 75px;
+        font-size: 0.75rem;
+    }
 }
