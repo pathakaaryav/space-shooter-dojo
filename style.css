@@ -666,6 +666,20 @@ body, html {
     text-shadow: 0 0 6px #fff;
 }
 
+.glow-cyan-btn {
+    color: #fff;
+    border: 2px solid var(--cyan);
+    box-shadow: 0 0 8px var(--cyan-glow);
+    background-image: linear-gradient(45deg, rgba(0, 240, 255, 0.08), rgba(0, 240, 255, 0.2));
+}
+
+.glow-cyan-btn:hover {
+    background-color: var(--cyan);
+    color: #000;
+    box-shadow: 0 0 16px var(--cyan), 0 0 32px var(--cyan-glow);
+    font-weight: 900;
+}
+
 .glow-green-btn {
     color: #fff;
     border: 2px solid var(--green);
