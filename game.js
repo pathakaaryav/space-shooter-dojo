@@ -40,7 +40,7 @@ const MISSIONS = {
     5: {
         title: "LASER GRID",
         subtitle: "SCOUTS ELIMINATED",
-        story: "Navigate a dense maze of active lasers and eliminate 12 agile scout drones.",
+        story: "Navigate a dense maze of active lasers and eliminate 10 agile scout drones.",
         xp: 3000
     },
     6: {
@@ -2143,7 +2143,7 @@ function fireBossRingLasers(boss) {
 // Mission 5: Laser Grid
 function setupMission5() {
     objectives = [
-        { type: 'drone', text: "Eliminate agile scout drones", count: 0, target: 6, completed: false },
+        { type: 'drone', text: "Eliminate agile scout drones", count: 0, target: 10, completed: false },
     ];
 
     const columnSpots = [];
@@ -2155,14 +2155,10 @@ function setupMission5() {
     }
     columnSpots.forEach(([x, z]) => spawnPillar(x, z, 0x00f0ff));
 
-    for (let i = 0; i < 6; i++) {
+    for (let i = 0; i < 10; i++) {
         const x = (Math.random() - 0.5) * 50;
         const z = (Math.random() - 0.5) * 50;
         spawnDrone(x, 2 + Math.random()*3, z, 0.05, 0xff0055, 2500);
-    }
-    for (let i = 0; i < 6; i++) {
-        const x = (Math.random() - 0.5) * 50;
-        const z = (Math.random() - 0.5) * 50;
     }
 }
 
