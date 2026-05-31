@@ -945,12 +945,26 @@ function spawnBeacon(x, y, z, id) {
 
 // Setup input listeners (keyboard, mouse look triggers)
 function setupInputListeners() {
-    isMobile = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
-    if (isMobile) {
+    const modal = document.getElementById('control-mode-modal');
+    const btnModePc = document.getElementById('btn-mode-pc');
+    const btnModeTouch = document.getElementById('btn-mode-touch');
+
+    btnModePc.addEventListener('click', () => {
+        isMobile = false;
+        document.body.classList.remove('touch-device');
+        document.getElementById('mobile-controls').classList.add('hidden');
+        modal.classList.add('hidden');
+        modal.classList.remove('active');
+    });
+
+    btnModeTouch.addEventListener('click', () => {
+        isMobile = true;
         document.body.classList.add('touch-device');
         document.getElementById('mobile-controls').classList.remove('hidden');
+        modal.classList.add('hidden');
+        modal.classList.remove('active');
         setupMobileTouchHandlers();
-    }
+    });
 
     function enterMobileGameMode() {
         isPlaying = true;

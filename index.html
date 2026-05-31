@@ -14,6 +14,23 @@
 </head>
 <body>
     <div id="game-container">
+        <!-- Control Mode Selection Modal -->
+        <div id="control-mode-modal" class="menu-container active">
+            <div class="menu-content glass animate-fade-in" style="max-width: 500px;">
+                <h1 class="logo glow-magenta" style="font-size: 2.2rem; margin-bottom: 10px;">SYSTEM STARTUP</h1>
+                <p class="subtitle glow-cyan" style="margin-bottom: 30px;">SELECT INPUT INTERFACE</p>
+                
+                <div style="display: flex; flex-direction: column; gap: 20px; width: 100%;">
+                    <button id="btn-mode-pc" class="btn glow-cyan-btn" style="padding: 15px; font-size: 1.1rem; height: auto;">
+                        PC / LAPTOP (KEYBOARD & MOUSE)
+                    </button>
+                    <button id="btn-mode-touch" class="btn glow-magenta-btn" style="padding: 15px; font-size: 1.1rem; height: auto;">
+                        TOUCHSCREEN (MOBILE / TABLET)
+                    </button>
+                </div>
+            </div>
+        </div>
+
         <!-- The WebGL 3D Canvas -->
         <canvas id="game-canvas"></canvas>
 
