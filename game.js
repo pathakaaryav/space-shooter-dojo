@@ -72,6 +72,96 @@ const MISSIONS = {
         subtitle: "SYSTEM PURGED",
         story: "The ultimate endurance run. Survive 20 drones, 4 turrets, and the final Boss Core.",
         xp: 10000
+    },
+    11: {
+        title: "NIGHTMARE 11",
+        subtitle: "DRONE SWARM SURVIVED",
+        story: "Extreme threat level. Overwhelming drone presence. Survive the onslaught.",
+        xp: 12000
+    },
+    12: {
+        title: "NIGHTMARE 12",
+        subtitle: "SQUADS ELIMINATED",
+        story: "Extreme threat level. Hostile elite squads have entered the area. Terminate them.",
+        xp: 13000
+    },
+    13: {
+        title: "NIGHTMARE 13",
+        subtitle: "TURRET GRID DESTROYED",
+        story: "Extreme threat level. A dense perimeter of defense turrets blocks the path. Clear the grid.",
+        xp: 14000
+    },
+    14: {
+        title: "NIGHTMARE 14",
+        subtitle: "GROUND WAR WON",
+        story: "Extreme threat level. Massive infantry deployment detected on the ground level. Neutralize all forces.",
+        xp: 15000
+    },
+    15: {
+        title: "NIGHTMARE 15",
+        subtitle: "EXTREME SWARM PURGED",
+        story: "Extreme threat level. A massive drone swarm is closing in. Eliminate all hostiles.",
+        xp: 16000
+    },
+    16: {
+        title: "NIGHTMARE 16",
+        subtitle: "SENTRY HELLSCAPE CLEARED",
+        story: "Extreme threat level. Heavy sentry turrets are locked onto this zone. Destroy them.",
+        xp: 17000
+    },
+    17: {
+        title: "NIGHTMARE 17",
+        subtitle: "COMBINED FORCES NEUTRALIZED",
+        story: "Extreme threat level. Drones and soldiers have coordinated an assault. Wipe them out.",
+        xp: 18000
+    },
+    18: {
+        title: "NIGHTMARE 18",
+        subtitle: "ELITE INFANTRY PURGED",
+        story: "Extreme threat level. Elite forces are holding the line. Break through.",
+        xp: 19000
+    },
+    19: {
+        title: "NIGHTMARE 19",
+        subtitle: "FORTRESS BREACHED",
+        story: "Extreme threat level. Sentry turrets protect the central sector. Cleanse it.",
+        xp: 20000
+    },
+    20: {
+        title: "NIGHTMARE 20",
+        subtitle: "AIR SUPERIORITY SECURED",
+        story: "Extreme threat level. Massive swarm of hostile aerial entities. Take them down.",
+        xp: 22000
+    },
+    21: {
+        title: "NIGHTMARE 21",
+        subtitle: "FORTIFIED FRONT CLEARED",
+        story: "Extreme threat level. Heavily fortified position with soldiers and turrets. Break the defenses.",
+        xp: 24000
+    },
+    22: {
+        title: "NIGHTMARE 22",
+        subtitle: "CORES OVERLOADED",
+        story: "Extreme threat level. Multiple reactor cores are online and guarded. Overload them all.",
+        xp: 26000
+    },
+    23: {
+        title: "NIGHTMARE 23",
+        subtitle: "DOOMSDAY SWARM CLEARED",
+        story: "Extreme threat level. An endless swarm of scout drones is descending. Survive and destroy.",
+        xp: 28000
+    },
+    24: {
+        title: "NIGHTMARE 24",
+        subtitle: "TOTAL ANNIHILATION COMPLETE",
+        story: "Extreme threat level. Maximum hostile army deployment. Eliminate all targets.",
+        xp: 30000
+    },
+    25: {
+        title: "NIGHTMARE 25",
+        subtitle: "NIGHTMARE CONQUERED",
+        story: "The ultimate nightmare. Destroy 5 boss cores and purge the surrounding army.",
+        xp: 50000
     }
 };
 
@@ -738,6 +828,13 @@ function spawnPillar(x, z, outlineColorHex) {
 }
 
 function spawnDrone(x, y, z, speed, beamColor, fireInterval) {
+    if (x === undefined) x = (Math.random() - 0.5) * 60;
+    if (y === undefined) y = 2 + Math.random() * 8;
+    if (z === undefined) z = (Math.random() - 0.5) * 60;
+    if (speed === undefined) speed = 0.04 + Math.random() * 0.04;
+    if (beamColor === undefined) beamColor = 0xff0055;
+    if (fireInterval === undefined) fireInterval = 1500 + Math.random() * 1500;
+
     const droneGeo = new THREE.OctahedronGeometry(0.8, 0);
     const droneMat = new THREE.MeshStandardMaterial({ color: 0x060312, roughness: 0.2 });
     const mesh = new THREE.Mesh(droneGeo, droneMat);
@@ -766,6 +863,9 @@ function spawnDrone(x, y, z, speed, beamColor, fireInterval) {
 
 // Mission 2 Stationary scanning turrets
 function spawnTurret(x, z) {
+    if (x === undefined) x = (Math.random() - 0.5) * 40;
+    if (z === undefined) z = (Math.random() - 0.5) * 40;
+
     const turretGroup = new THREE.Group();
     turretGroup.position.set(x, 0, z);
 
@@ -2151,6 +2251,9 @@ function setupMission10() {
 
 // Human Soldier AI System
 function spawnSoldier(x, z) {
+    if (x === undefined) x = (Math.random() - 0.5) * 50;
+    if (z === undefined) z = (Math.random() - 0.5) * 50;
+
     const soldierGroup = new THREE.Group();
     soldierGroup.position.set(x, 0, z); // Soldiers stand on the ground y=0
 
@@ -2560,6 +2663,49 @@ function explodeGrenade(pos) {
 }
 
 
+// --- Missing Nightmare Campaign Helpers ---
+function spawnAmmoCrate() {
+    spawnAmmo((Math.random() - 0.5) * 60, 0.5, (Math.random() - 0.5) * 60);
+}
+
+function spawnCore(position) {
+    let core = new THREE.Group();
+    core.position.copy(position);
+    const cGeo = new THREE.DodecahedronGeometry(2.0, 0);
+    const cMat = new THREE.MeshBasicMaterial({ color: 0xff1111 });
+    const mesh = new THREE.Mesh(cGeo, cMat);
+    core.add(mesh);
+    
+    const edges = new THREE.EdgesGeometry(cGeo);
+    const outline = new THREE.LineSegments(edges, new THREE.LineBasicMaterial({ color: 0xff3333, linewidth: 2 }));
+    core.add(outline);
+
+    const sGeo = new THREE.BoxGeometry(0.4, 5.0, 3.5);
+    const sMat = new THREE.MeshStandardMaterial({ color: 0x09031c, roughness: 0.1 });
+    const sL = new THREE.Mesh(sGeo, sMat);
+    sL.position.set(-3.0, 0, 0);
+    const shieldLEdges = new THREE.EdgesGeometry(sGeo);
+    const shieldLLines = new THREE.LineSegments(shieldLEdges, new THREE.LineBasicMaterial({ color: 0x00f0ff }));
+    sL.add(shieldLLines);
+    core.add(sL);
+    
+    const sR = new THREE.Mesh(sGeo, sMat);
+    sR.position.set(3.0, 0, 0);
+    const shieldREdges = new THREE.EdgesGeometry(sGeo);
+    const shieldRLines = new THREE.LineSegments(shieldREdges, new THREE.LineBasicMaterial({ color: 0x00f0ff }));
+    sR.add(shieldRLines);
+    core.add(sR);
+    
+    scene.add(core);
+    core.userData = { isBoss: true, health: 600, maxHealth: 600, lastAttack: Date.now(), attackInterval: 2000, shieldL: sL, shieldR: sR };
+    bosses.push(core);
+}
+
+function updateMissionHUD() {
+    updateHUD();
+    updateObjectivesHUD();
+}
+
 function setupMission11() { objectives = [{ type: 'drone', text: 'Survive Drone Swarm', count: 0, target: 20, completed: false }]; for(let i=0; i<20; i++) spawnDrone(); for(let i=0; i<3; i++) spawnAmmoCrate(); updateMissionHUD(); }
 function setupMission12() { objectives = [{ type: 'soldier', text: 'Eliminate Squads', count: 0, target: 15, completed: false }]; for(let i=0; i<15; i++) spawnSoldier(); for(let i=0; i<4; i++) spawnAmmoCrate(); updateMissionHUD(); }
 function setupMission13() { objectives = [{ type: 'turret', text: 'Destroy Turret Grid', count: 0, target: 8, completed: false }]; for(let i=0; i<8; i++) spawnTurret(); for(let i=0; i<3; i++) spawnAmmoCrate(); updateMissionHUD(); }
@@ -2571,8 +2717,8 @@ function setupMission18() { objectives = [{ type: 'soldier', text: 'Elite Infant
 function setupMission19() { objectives = [{ type: 'turret', text: 'Fortress Breaker', count: 0, target: 15, completed: false }]; for(let i=0; i<15; i++) spawnTurret(); for(let i=0; i<6; i++) spawnAmmoCrate(); updateMissionHUD(); }
 function setupMission20() { objectives = [{ type: 'drone', text: 'Air Superiority', count: 0, target: 40, completed: false }]; for(let i=0; i<40; i++) spawnDrone(); for(let i=0; i<6; i++) spawnAmmoCrate(); updateMissionHUD(); }
 function setupMission21() { objectives = [{ type: 'soldier', text: 'Kill Soldiers', count: 0, target: 20, completed: false }, { type: 'turret', text: 'Kill Turrets', count: 0, target: 10, completed: false }]; for(let i=0; i<20; i++) spawnSoldier(); for(let i=0; i<10; i++) spawnTurret(); for(let i=0; i<6; i++) spawnAmmoCrate(); updateMissionHUD(); }
-function setupMission22() { objectives = [{ type: 'core', text: 'Destroy Cores', count: 0, target: 3, completed: false }]; spawnCore(new THREE.Vector3(0, 5, -20)); spawnCore(new THREE.Vector3(20, 5, -20)); spawnCore(new THREE.Vector3(-20, 5, -20)); for(let i=0; i<15; i++) spawnDrone(); for(let i=0; i<5; i++) spawnAmmoCrate(); updateMissionHUD(); }
+function setupMission22() { objectives = [{ type: 'boss', text: 'Destroy Cores', count: 0, target: 3, completed: false }]; spawnCore(new THREE.Vector3(0, 5, -20)); spawnCore(new THREE.Vector3(20, 5, -20)); spawnCore(new THREE.Vector3(-20, 5, -20)); for(let i=0; i<15; i++) spawnDrone(); for(let i=0; i<5; i++) spawnAmmoCrate(); updateMissionHUD(); }
 function setupMission23() { objectives = [{ type: 'drone', text: 'Doomsday Swarm', count: 0, target: 50, completed: false }]; for(let i=0; i<50; i++) spawnDrone(); for(let i=0; i<8; i++) spawnAmmoCrate(); updateMissionHUD(); }
 function setupMission24() { objectives = [{ type: 'soldier', text: 'Total Annihilation', count: 0, target: 40, completed: false }]; for(let i=0; i<40; i++) spawnSoldier(); for(let i=0; i<8; i++) spawnAmmoCrate(); updateMissionHUD(); }
-function setupMission25() { objectives = [{ type: 'core', text: 'Destroy Boss Cores', count: 0, target: 5, completed: false }, { type: 'soldier', text: 'Kill Guards', count: 0, target: 20, completed: false }]; spawnCore(new THREE.Vector3(0, 5, -20)); spawnCore(new THREE.Vector3(20, 5, -20)); spawnCore(new THREE.Vector3(-20, 5, -20)); spawnCore(new THREE.Vector3(20, 5, 20)); spawnCore(new THREE.Vector3(-20, 5, 20)); for(let i=0; i<20; i++) spawnSoldier(); for(let i=0; i<10; i++) spawnAmmoCrate(); updateMissionHUD(); }
+function setupMission25() { objectives = [{ type: 'boss', text: 'Destroy Boss Cores', count: 0, target: 5, completed: false }, { type: 'soldier', text: 'Kill Guards', count: 0, target: 20, completed: false }]; spawnCore(new THREE.Vector3(0, 5, -20)); spawnCore(new THREE.Vector3(20, 5, -20)); spawnCore(new THREE.Vector3(-20, 5, -20)); spawnCore(new THREE.Vector3(20, 5, 20)); spawnCore(new THREE.Vector3(-20, 5, 20)); for(let i=0; i<20; i++) spawnSoldier(); for(let i=0; i<10; i++) spawnAmmoCrate(); updateMissionHUD(); }
 
