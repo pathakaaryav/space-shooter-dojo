@@ -817,17 +817,18 @@ body, html {
 
 /* Mobile Controls Overlay Styles */
 #mobile-controls {
-    position: absolute;
+    position: fixed;
     top: 0;
     left: 0;
-    width: 100vw;
-    height: 100vh;
-    z-index: 99;
+    right: 0;
+    bottom: 0;
+    z-index: 9999;
     pointer-events: none;
     display: flex;
     justify-content: space-between;
     align-items: flex-end;
     padding: 30px;
+    transform: translateZ(0);
 }
 
 #joystick-zone {

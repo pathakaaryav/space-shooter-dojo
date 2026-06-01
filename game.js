@@ -2810,6 +2810,7 @@ function setupMobileTouchHandlers() {
 
     window.addEventListener('touchmove', (e) => {
         if (joystickTouchId !== null) {
+            e.preventDefault();
             for (let i = 0; i < e.touches.length; i++) {
                 if (e.touches[i].identifier === joystickTouchId) {
                     moveJoystick(e.touches[i].clientX, e.touches[i].clientY);
@@ -2873,6 +2874,7 @@ function setupMobileTouchHandlers() {
 
     window.addEventListener('touchmove', (e) => {
         if (lookTouchId !== null) {
+            e.preventDefault();
             for (let i = 0; i < e.touches.length; i++) {
                 const touch = e.touches[i];
                 if (touch.identifier === lookTouchId) {
@@ -2897,7 +2899,7 @@ function setupMobileTouchHandlers() {
                 }
             }
         }
-    });
+    }, { passive: false });
 
     window.addEventListener('touchend', (e) => {
         if (lookTouchId !== null) {
@@ -2926,17 +2928,21 @@ function setupMobileTouchHandlers() {
     const btnJump = document.getElementById('btn-jump-mobile');
     const btnFire = document.getElementById('btn-fire-mobile');
 
-    btnPause.addEventListener('touchstart', (e) => {
+    const handlePause = (e) => {
         e.preventDefault();
         showMenuDashboard();
-    });
+    };
+    btnPause.addEventListener('touchstart', handlePause);
+    btnPause.addEventListener('mousedown', handlePause);
 
-    btnReload.addEventListener('touchstart', (e) => {
+    const handleReload = (e) => {
         e.preventDefault();
         reloadWeapon();
-    });
+    };
+    btnReload.addEventListener('touchstart', handleReload);
+    btnReload.addEventListener('mousedown', handleReload);
 
-    btnSwap.addEventListener('touchstart', (e) => {
+    const handleSwap = (e) => {
         e.preventDefault();
         if (gameState === 'PLAYING') {
             let targetActiveSlot = activeSlot === 1 ? 2 : 1;
@@ -2960,9 +2966,11 @@ function setupMobileTouchHandlers() {
                 updateHUD();
             }
         }
-    });
+    };
+    btnSwap.addEventListener('touchstart', handleSwap);
+    btnSwap.addEventListener('mousedown', handleSwap);
 
-    btnCrouch.addEventListener('touchstart', (e) => {
+    const handleCrouch = (e) => {
         e.preventDefault();
         keys.ctrl = !keys.ctrl;
         if (keys.ctrl) {
@@ -2970,44 +2978,62 @@ function setupMobileTouchHandlers() {
         } else {
             btnCrouch.classList.remove('active');
         }
-    });
+    };
+    btnCrouch.addEventListener('touchstart', handleCrouch);
+    btnCrouch.addEventListener('mousedown', handleCrouch);
 
-    btnMelee.addEventListener('touchstart', (e) => {
+    const handleMelee = (e) => {
         e.preventDefault();
         meleeAttack();
-    });
+    };
+    btnMelee.addEventListener('touchstart', handleMelee);
+    btnMelee.addEventListener('mousedown', handleMelee);
 
-    btnGrenade.addEventListener('touchstart', (e) => {
+    const handleGrenade = (e) => {
         e.preventDefault();
         throwGrenade();
-    });
+    };
+    btnGrenade.addEventListener('touchstart', handleGrenade);
+    btnGrenade.addEventListener('mousedown', handleGrenade);
 
-    btnAbility.addEventListener('touchstart', (e) => {
+    const handleAbility = (e) => {
         e.preventDefault();
         activateAbility();
-    });
+    };
+    btnAbility.addEventListener('touchstart', handleAbility);
+    btnAbility.addEventListener('mousedown', handleAbility);
 
-    btnScope.addEventListener('touchstart', (e) => {
+    const handleScope = (e) => {
         e.preventDefault();
         toggleScope();
-    });
+    };
+    btnScope.addEventListener('touchstart', handleScope);
+    btnScope.addEventListener('mousedown', handleScope);
 
-    btnJump.addEventListener('touchstart', (e) => {
+    const startJump = (e) => {
         e.preventDefault();
         keys.space = true;
-    });
-    btnJump.addEventListener('touchend', (e) => {
+    };
+    const endJump = (e) => {
         e.preventDefault();
         keys.space = false;
-    });
+    };
+    btnJump.addEventListener('touchstart', startJump);
+    btnJump.addEventListener('mousedown', startJump);
+    btnJump.addEventListener('touchend', endJump);
+    btnJump.addEventListener('mouseup', endJump);
 
-    btnFire.addEventListener('touchstart', (e) => {
+    const startFire = (e) => {
         e.preventDefault();
         isShooting = true;
-    });
-    btnFire.addEventListener('touchend', (e) => {
+    };
+    const endFire = (e) => {
         e.preventDefault();
         isShooting = false;
-    });
+    };
+    btnFire.addEventListener('touchstart', startFire);
+    btnFire.addEventListener('mousedown', startFire);
+    btnFire.addEventListener('touchend', endFire);
+    btnFire.addEventListener('mouseup', endFire);
 }
 
