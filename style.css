@@ -97,9 +97,9 @@ body, html {
     display: flex;
     justify-content: space-around;
     align-items: center;
-    width: 480px;
-    height: 56px;
-    padding: 10px 20px;
+    width: 380px;
+    height: 46px;
+    padding: 6px 15px;
     border-top: 2px solid var(--magenta);
 }
 
@@ -110,7 +110,7 @@ body, html {
 }
 
 .hud-stat .label {
-    font-size: 0.75rem;
+    font-size: 0.65rem;
     font-weight: 500;
     color: rgba(226, 222, 242, 0.55);
     letter-spacing: 2px;
@@ -118,23 +118,23 @@ body, html {
 
 .hud-stat .value {
     font-family: 'Orbitron', sans-serif;
-    font-size: 1.3rem;
+    font-size: 1.1rem;
     font-weight: 700;
 }
 
 /* HUD Objectives Panel */
 #objectives-panel {
     position: absolute;
-    top: 96px;
+    top: 80px;
     left: 24px;
-    width: 280px;
-    padding: 16px;
+    width: 220px;
+    padding: 10px 12px;
     border-left: 2px solid var(--cyan);
 }
 
 .panel-header {
     font-family: 'Orbitron', sans-serif;
-    font-size: 0.95rem;
+    font-size: 0.85rem;
     font-weight: 700;
     letter-spacing: 1px;
     border-bottom: 1px solid rgba(255, 255, 255, 0.1);
@@ -150,7 +150,7 @@ body, html {
 }
 
 .objective-item {
-    font-size: 0.95rem;
+    font-size: 0.85rem;
     font-weight: 500;
     display: flex;
     align-items: flex-start;
@@ -166,8 +166,8 @@ body, html {
 }
 
 .objective-bullet {
-    width: 12px;
-    height: 12px;
+    width: 10px;
+    height: 10px;
     border: 1px solid var(--cyan);
     border-radius: 2px;
     margin-top: 3px;
@@ -185,7 +185,7 @@ body, html {
     position: absolute;
     top: -5px;
     left: 1px;
-    font-size: 0.75rem;
+    font-size: 0.7rem;
     color: var(--green);
     font-weight: 900;
 }
@@ -195,8 +195,8 @@ body, html {
     position: absolute;
     bottom: 24px;
     left: 24px;
-    width: 250px;
-    padding: 16px;
+    width: 200px;
+    padding: 10px 14px;
     border-left: 3px solid var(--green);
 }
 
@@ -204,8 +204,8 @@ body, html {
     position: absolute;
     bottom: 24px;
     right: 24px;
-    width: 280px;
-    padding: 16px;
+    width: 220px;
+    padding: 10px 14px;
     border-right: 3px solid var(--cyan);
 }
 
@@ -241,13 +241,13 @@ body, html {
     width: 100%;
 }
 .hud-bar-container.margin-top {
-    margin-top: 12px;
+    margin-top: 8px;
 }
 
 .hud-bar-label {
     display: flex;
     justify-content: space-between;
-    font-size: 0.95rem;
+    font-size: 0.8rem;
     font-weight: 700;
     letter-spacing: 1px;
     margin-bottom: 4px;
@@ -255,7 +255,7 @@ body, html {
 
 .hud-bar-bg {
     width: 100%;
-    height: 8px;
+    height: 6px;
     background-color: rgba(255, 255, 255, 0.1);
     border-radius: 4px;
     overflow: hidden;
@@ -280,13 +280,13 @@ body, html {
 /* Ammo & Weapon Display */
 .weapon-info {
     text-align: right;
-    margin-bottom: 8px;
+    margin-bottom: 6px;
 }
 
 .weapon-name {
     font-family: 'Orbitron', sans-serif;
     font-weight: 900;
-    font-size: 1.25rem;
+    font-size: 1.05rem;
 }
 
 .fire-mode {
@@ -303,33 +303,33 @@ body, html {
 }
 
 .clip-value {
-    font-size: 2.2rem;
+    font-size: 1.8rem;
     font-weight: 700;
     color: #fff;
     text-shadow: 0 0 8px rgba(255,255,255,0.3);
 }
 
 .separator {
-    font-size: 1.5rem;
+    font-size: 1.2rem;
     color: rgba(226, 222, 242, 0.3);
     margin: 0 8px;
 }
 
 .reserve-value {
-    font-size: 1.3rem;
+    font-size: 1.1rem;
     color: rgba(226, 222, 242, 0.7);
 }
 
 /* Reloading Indicators */
 #reload-indicator {
     width: 100%;
-    margin-top: 8px;
+    margin-top: 6px;
     text-align: right;
 }
 
 .reload-text {
     font-weight: 700;
-    font-size: 0.9rem;
+    font-size: 0.75rem;
     letter-spacing: 2px;
     margin-bottom: 4px;
     animation: blink 0.8s infinite alternate;
@@ -1112,6 +1112,98 @@ body, html {
         bottom: 60px;
         right: 130px;
         font-size: 1rem;
+    }
+
+    /* HUD elements resizing on mobile screens */
+    #hud {
+        padding: 10px;
+    }
+    .hud-top-bar {
+        width: 260px;
+        height: 38px;
+        padding: 4px 10px;
+    }
+    .hud-stat .label {
+        font-size: 0.55rem;
+        letter-spacing: 1px;
+    }
+    .hud-stat .value {
+        font-size: 0.85rem;
+    }
+    #objectives-panel {
+        top: 60px;
+        left: 15px;
+        width: 170px;
+        padding: 8px;
+    }
+    .panel-header {
+        font-size: 0.7rem;
+        margin-bottom: 6px;
+        padding-bottom: 4px;
+    }
+    .objective-item {
+        font-size: 0.7rem;
+        gap: 6px;
+    }
+    .objective-bullet {
+        width: 8px;
+        height: 8px;
+        margin-top: 2px;
+    }
+    .objective-item.complete .objective-bullet::after {
+        top: -6px;
+        left: 0px;
+        font-size: 0.6rem;
+    }
+    .hud-bottom-left {
+        width: 140px;
+        padding: 8px;
+        bottom: 15px;
+        left: 15px;
+    }
+    .hud-bar-label {
+        font-size: 0.65rem;
+    }
+    .hud-bar-bg {
+        height: 4px;
+    }
+    .hud-bar-container.margin-top {
+        margin-top: 6px;
+    }
+    .hud-bottom-right {
+        width: 150px;
+        padding: 8px;
+        bottom: 15px;
+        right: 15px;
+    }
+    .weapon-name {
+        font-size: 0.8rem;
+    }
+    .fire-mode {
+        font-size: 0.6rem;
+        letter-spacing: 1px;
+    }
+    .ammo-display {
+        margin-top: 2px;
+    }
+    .clip-value {
+        font-size: 1.3rem;
+    }
+    .separator {
+        font-size: 0.9rem;
+        margin: 0 4px;
+    }
+    .reserve-value {
+        font-size: 0.85rem;
+    }
+    #reload-indicator {
+        margin-top: 4px;
+    }
+    .reload-text {
+        font-size: 0.65rem;
+    }
+    .reload-bar-bg {
+        height: 3px;
     }
 }
 
