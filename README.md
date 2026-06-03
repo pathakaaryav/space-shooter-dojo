@@ -1,6 +1,6 @@
 # 🎮 Aaryavaa's Dojo - Cyberpunk 3D FPS
 
-![Aaryavaa's Dojo Logo](logo.png)
+<img src="logo.png" width="200" alt="Aaryavaa's Dojo Logo">
 
 Welcome to **Aaryavaa's Dojo: Project Redline**, a premium, high-octane 3D First Person Shooter built directly for web browsers. Secure sector telemetry, bypass network firewalls, scale signal dishes, and purge singularity cores.
 
@@ -11,7 +11,7 @@ Welcome to **Aaryavaa's Dojo: Project Redline**, a premium, high-octane 3D First
 ### 📱 Scan to Play on Mobile
 Scan the QR code below with your phone's camera to load the game instantly:
 
-![Game QR Code](qrcode.png)
+<img src="qrcode.png" width="90" alt="Game QR Code">
 
 ---
 
