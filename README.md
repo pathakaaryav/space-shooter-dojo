@@ -8,6 +8,13 @@ Welcome to **Aaryavaa's Dojo: Project Redline**, a premium, high-octane 3D First
 
 ---
 
+### 📱 Scan to Play on Mobile
+Scan the QR code below with your phone's camera to load the game instantly:
+
+![Game QR Code](qrcode.png)
+
+---
+
 ## 🌌 Story Campaign Overview
 Rogue AI sentinels have overrun the grid mainframe. As a cyber operator, infiltrate the sectors, adapt your loadout, utilize tactical abilities, and clean the security perimeters.
 
