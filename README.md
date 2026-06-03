@@ -1,5 +1,7 @@
 # 🎮 Aaryavaa's Dojo - Cyberpunk 3D FPS
 
+![Aaryavaa's Dojo Logo](logo.png)
+
 Welcome to **Aaryavaa's Dojo: Project Redline**, a premium, high-octane 3D First Person Shooter built directly for web browsers. Secure sector telemetry, bypass network firewalls, scale signal dishes, and purge singularity cores.
 
 🚀 **[PLAY THE GAME LIVE HERE!](https://pathakaaryav.github.io/space-shooter-dojo/)**
