@@ -272,10 +272,11 @@ const ABILITY_STATS = {
 
 function selectAbility(a) {
     selectedAbility = a;
-    document.querySelectorAll('#ability-grid .weapon-card').forEach(card => {
-        if(card.getAttribute('data-ability') === a) card.classList.add('selected');
-        else card.classList.remove('selected');
-    });
+    renderAbilities();
+    const abilityNameEl = document.getElementById('ability-name');
+    const abilityStatusEl = document.getElementById('ability-status');
+    if (abilityNameEl) abilityNameEl.textContent = a.toUpperCase();
+    if (abilityStatusEl) abilityStatusEl.textContent = ABILITY_STATS[a].passive ? "PASSIVE" : "READY (PRESS 5)";
 }
 
 let targetSlot = 1;
@@ -284,18 +285,13 @@ function setTargetSlot(slot) {
     const btn1 = document.getElementById('btn-target-primary');
     const btn2 = document.getElementById('btn-target-secondary');
     if (slot === 1) {
-        btn1.style.background = 'rgba(255, 0, 85, 0.2)';
-        btn2.style.background = 'transparent';
+        if (btn1) btn1.style.background = 'rgba(255, 0, 85, 0.2)';
+        if (btn2) btn2.style.background = 'transparent';
     } else {
-        btn1.style.background = 'transparent';
-        btn2.style.background = 'rgba(0, 240, 255, 0.2)';
+        if (btn1) btn1.style.background = 'transparent';
+        if (btn2) btn2.style.background = 'rgba(0, 240, 255, 0.2)';
     }
-    // highlight the corresponding weapon
-    let current = slot === 1 ? primaryWeapon : secondaryWeapon;
-    document.querySelectorAll('.weapon-card').forEach(card => {
-        if(card.getAttribute('data-weapon') === current) card.classList.add('selected');
-        else card.classList.remove('selected');
-    });
+    renderWeapons();
 }
 
 function selectWeapon(w) {
@@ -306,11 +302,7 @@ function selectWeapon(w) {
     } else {
         secondaryWeapon = w;
     }
-
-    document.querySelectorAll('.weapon-card').forEach(card => {
-        if(card.getAttribute('data-weapon') === w) card.classList.add('selected');
-        else card.classList.remove('selected');
-    });
+    renderWeapons();
 }
 
 const RECOIL_DECAY = 0.875;
@@ -415,6 +407,10 @@ function init() {
     setupInputListeners();
 
     // Dashboard card selections init
+    renderWeapons();
+    renderAbilities();
+    selectWeapon('MP5');
+    selectAbility('Medic');
     showMenuDashboard();
     selectMission(1);
 
@@ -596,32 +592,37 @@ function loadMissionLevel(missionId) {
     gameOverOverlay.classList.add('hidden');
 
     // Build specific layouts
-    switch(missionId) {
-        case 1: setupMission1(); break;
-        case 2: setupMission2(); break;
-        case 3: setupMission3(); break;
-        case 4: setupMission4(); break;
-        case 5: setupMission5(); break;
-        case 6: setupMission6(); break;
-        case 7: setupMission7(); break;
-        case 8: setupMission8(); break;
-        case 9: setupMission9(); break;
-        case 10: setupMission10(); break;
-        case 11: setupMission11(); break;
-        case 12: setupMission12(); break;
-        case 13: setupMission13(); break;
-        case 14: setupMission14(); break;
-        case 15: setupMission15(); break;
-        case 16: setupMission16(); break;
-        case 17: setupMission17(); break;
-        case 18: setupMission18(); break;
-        case 19: setupMission19(); break;
-        case 20: setupMission20(); break;
-        case 21: setupMission21(); break;
-        case 22: setupMission22(); break;
-        case 23: setupMission23(); break;
-        case 24: setupMission24(); break;
-        case 25: setupMission25(); break;
+    const customMission = MISSIONS[missionId];
+    if (customMission && (missionId > 25 || customMission.isCustom)) {
+        setupCustomMission(customMission);
+    } else {
+        switch(missionId) {
+            case 1: setupMission1(); break;
+            case 2: setupMission2(); break;
+            case 3: setupMission3(); break;
+            case 4: setupMission4(); break;
+            case 5: setupMission5(); break;
+            case 6: setupMission6(); break;
+            case 7: setupMission7(); break;
+            case 8: setupMission8(); break;
+            case 9: setupMission9(); break;
+            case 10: setupMission10(); break;
+            case 11: setupMission11(); break;
+            case 12: setupMission12(); break;
+            case 13: setupMission13(); break;
+            case 14: setupMission14(); break;
+            case 15: setupMission15(); break;
+            case 16: setupMission16(); break;
+            case 17: setupMission17(); break;
+            case 18: setupMission18(); break;
+            case 19: setupMission19(); break;
+            case 20: setupMission20(); break;
+            case 21: setupMission21(); break;
+            case 22: setupMission22(); break;
+            case 23: setupMission23(); break;
+            case 24: setupMission24(); break;
+            case 25: setupMission25(); break;
+        }
     }
 
     updateHUD();
@@ -998,7 +999,8 @@ function setupInputListeners() {
 
     btnNextMission.addEventListener('click', () => {
         window.sounds.init();
-        currentMissionId = Math.min(25, currentMissionId + 1);
+        const maxMissionId = Math.max(...Object.keys(MISSIONS).map(Number));
+        currentMissionId = Math.min(maxMissionId, currentMissionId + 1);
         loadMissionLevel(currentMissionId);
         if (isMobile) {
             enterMobileGameMode();
@@ -1015,13 +1017,30 @@ function setupInputListeners() {
         showMenuDashboard();
     });
 
-    // Handle dashboard card clicks
-    document.querySelectorAll('.mission-card').forEach(card => {
-        card.addEventListener('click', () => {
-            const mId = parseInt(card.getAttribute('data-mission'));
-            selectMission(mId);
-        });
+    // Secret Key Cheat Sequence Listener
+    let secretCode = "aaryavtheoriginal";
+    let typedKeys = "";
+    window.addEventListener('keydown', (e) => {
+        if (e.key && e.key.length === 1) {
+            typedKeys += e.key.toLowerCase();
+            if (typedKeys.length > secretCode.length) {
+                typedKeys = typedKeys.substring(typedKeys.length - secretCode.length);
+            }
+            if (typedKeys === secretCode) {
+                showSecretVerificationModal();
+                typedKeys = "";
+            }
+        }
     });
+
+    // Credits double-click shortcut
+    const creditsText = document.getElementById('credits-text');
+    if (creditsText) {
+        creditsText.style.cursor = 'pointer';
+        creditsText.addEventListener('dblclick', () => {
+            showSecretVerificationModal();
+        });
+    }
 
     document.addEventListener('pointerlockchange', () => {
         if (document.pointerLockElement === canvas) {
@@ -1156,20 +1175,8 @@ function showMenuDashboard() {
     
     isPlaying = false;
     
-    // Unlock cards UI
-    for (let i = 1; i <= 25; i++) {
-        const card = document.getElementById(`card-m${i}`);
-        if (!card) continue;
-        if (unlockedMissions.includes(i)) {
-            card.className = "mission-card active-card" + (i === currentMissionId ? " selected" : "");
-            card.querySelector('.card-status').className = "card-status glow-green";
-            card.querySelector('.card-status').textContent = "UNLOCKED";
-        } else {
-            card.className = "mission-card locked-card";
-            card.querySelector('.card-status').className = "card-status glow-red";
-            card.querySelector('.card-status').textContent = "LOCKED";
-        }
-    }
+    // Re-render the dynamic missions grid list
+    renderMissions();
 
     menuOverlay.classList.add('active');
     hud.classList.add('hidden');
@@ -1514,7 +1521,8 @@ function completeMission() {
     const data = MISSIONS[currentMissionId];
     
     // Update dashboard states
-    if (currentMissionId < 25 && !unlockedMissions.includes(currentMissionId + 1)) {
+    const maxMissionId = Math.max(...Object.keys(MISSIONS).map(Number));
+    if (currentMissionId < maxMissionId && !unlockedMissions.includes(currentMissionId + 1)) {
         unlockedMissions.push(currentMissionId + 1);
     }
 
@@ -1531,7 +1539,7 @@ function completeMission() {
     missionCompleteOverlay.classList.add('active');
 
     // Hide Next Mission button if final mission completed
-    if (currentMissionId === 25) {
+    if (currentMissionId === maxMissionId) {
         btnNextMission.classList.add('hidden');
     } else {
         btnNextMission.classList.remove('hidden');
@@ -3035,5 +3043,577 @@ function setupMobileTouchHandlers() {
     btnFire.addEventListener('mousedown', startFire);
     btnFire.addEventListener('touchend', endFire);
     btnFire.addEventListener('mouseup', endFire);
+}
+
+// ==========================================
+// SECRET DEVELOPER CONSOLE & CONFIG EDITOR
+// ==========================================
+
+// Global render function for Missions in Menu Dashboard
+function renderMissions() {
+    const missionGrid = document.querySelector('.mission-grid');
+    if (!missionGrid) return;
+    
+    missionGrid.innerHTML = '';
+    
+    // Sort mission IDs numerically
+    const missionIds = Object.keys(MISSIONS).map(Number).sort((a, b) => a - b);
+    
+    missionIds.forEach(id => {
+        const data = MISSIONS[id];
+        const isUnlocked = unlockedMissions.includes(id);
+        const isSelected = (id === currentMissionId);
+        
+        const card = document.createElement('div');
+        card.id = `card-m${id}`;
+        card.className = isUnlocked 
+            ? `mission-card active-card${isSelected ? ' selected' : ''}` 
+            : 'mission-card locked-card';
+        card.setAttribute('data-mission', id);
+        
+        const formattedId = id < 10 ? `0${id}` : id;
+        
+        card.innerHTML = `
+            <div class="card-num glow-magenta">${formattedId}</div>
+            <div class="card-title">${data.title}</div>
+            <p class="card-desc">${data.story}</p>
+            <div class="card-status ${isUnlocked ? 'glow-green' : 'glow-red'}">${isUnlocked ? 'UNLOCKED' : 'LOCKED'}</div>
+        `;
+        
+        card.addEventListener('click', () => {
+            if (unlockedMissions.includes(id)) {
+                selectMission(id);
+            }
+        });
+        
+        missionGrid.appendChild(card);
+    });
+}
+
+// Global render function for Weapons in Menu Dashboard
+function renderWeapons() {
+    const weaponGrid = document.getElementById('weapon-grid');
+    if (!weaponGrid) return;
+    
+    weaponGrid.innerHTML = '';
+    
+    Object.keys(WEAPON_STATS).forEach(key => {
+        const data = WEAPON_STATS[key];
+        const isSelected = (key === (targetSlot === 1 ? primaryWeapon : secondaryWeapon));
+        
+        const card = document.createElement('div');
+        card.className = `weapon-card${isSelected ? ' selected' : ''}`;
+        card.setAttribute('data-weapon', key);
+        card.innerHTML = `
+            <div class="w-title">${data.name}</div>
+            <div class="w-desc">Damage: ${data.damage} | Clip: ${data.clip} | Fire Rate: ${data.fireRate}ms</div>
+        `;
+        
+        card.addEventListener('click', () => {
+            selectWeapon(key);
+        });
+        
+        weaponGrid.appendChild(card);
+    });
+}
+
+// Global render function for Abilities in Menu Dashboard
+function renderAbilities() {
+    const abilityGrid = document.getElementById('ability-grid');
+    if (!abilityGrid) return;
+    
+    abilityGrid.innerHTML = '';
+    
+    Object.keys(ABILITY_STATS).forEach(key => {
+        const data = ABILITY_STATS[key];
+        const isSelected = (key === selectedAbility);
+        
+        const card = document.createElement('div');
+        card.className = `weapon-card${isSelected ? ' selected' : ''}`;
+        card.setAttribute('data-ability', key);
+        card.innerHTML = `
+            <div class="w-title">${data.name}</div>
+            <div class="w-desc">Cooldown: ${data.cooldown / 1000}s | Duration: ${data.duration / 1000}s ${data.passive ? '(Passive)' : ''}</div>
+        `;
+        
+        card.addEventListener('click', () => {
+            selectAbility(key);
+        });
+        
+        abilityGrid.appendChild(card);
+    });
+}
+
+// Spawner logic for custom editor levels
+function setupCustomMission(mission) {
+    objectives = [];
+    
+    // Spawn custom objective items
+    if (mission.dronesCount && mission.dronesCount > 0) {
+        objectives.push({ type: 'drone', text: "Eliminate scout drones", count: 0, target: parseInt(mission.dronesCount), completed: false });
+        for (let i = 0; i < mission.dronesCount; i++) {
+            const angle = Math.random() * Math.PI * 2;
+            const radius = 15 + Math.random() * 15;
+            const dx = Math.cos(angle) * radius;
+            const dz = Math.sin(angle) * radius;
+            const dy = 2 + Math.random() * 4.0;
+            spawnDrone(dx, dy, dz, 0.02, 0xff0055, 3000);
+        }
+    }
+    
+    if (mission.soldiersCount && mission.soldiersCount > 0) {
+        objectives.push({ type: 'soldier', text: "Neutralize armed soldiers", count: 0, target: parseInt(mission.soldiersCount), completed: false });
+        for (let i = 0; i < mission.soldiersCount; i++) {
+            spawnSoldier();
+        }
+    }
+    
+    if (mission.turretsCount && mission.turretsCount > 0) {
+        objectives.push({ type: 'turret', text: "Destroy defense turrets", count: 0, target: parseInt(mission.turretsCount), completed: false });
+        for (let i = 0; i < mission.turretsCount; i++) {
+            spawnTurret();
+        }
+    }
+    
+    if (mission.beaconsCount && mission.beaconsCount > 0) {
+        objectives.push({ type: 'beacon', text: "Destroy signal beacons", count: 0, target: parseInt(mission.beaconsCount), completed: false });
+        for (let i = 0; i < mission.beaconsCount; i++) {
+            spawnBeacon((Math.random() - 0.5) * 40, 0.6, (Math.random() - 0.5) * 40, i + 1);
+        }
+    }
+    
+    if (mission.bossesCount && mission.bossesCount > 0) {
+        objectives.push({ type: 'boss', text: "Purge singularity core", count: 0, target: parseInt(mission.bossesCount), completed: false });
+        for (let i = 0; i < mission.bossesCount; i++) {
+            const bx = (i - (mission.bossesCount - 1) / 2) * 20;
+            spawnCore(new THREE.Vector3(bx, 5, -20));
+        }
+    }
+    
+    // Always spawn a few ammo crates
+    const crates = mission.ammoCratesCount || 3;
+    for (let i = 0; i < crates; i++) {
+        spawnAmmoCrate();
+    }
+    
+    updateObjectivesHUD();
+}
+
+// Dev verification modal controls
+function showSecretVerificationModal() {
+    // Release pointer lock just in case
+    document.exitPointerLock();
+    
+    const modal = document.getElementById('secret-verification-modal');
+    const input = document.getElementById('secret-answer-input');
+    const submitBtn = document.getElementById('btn-secret-submit');
+    const cancelBtn = document.getElementById('btn-secret-cancel');
+    
+    if (!modal) return;
+    
+    modal.classList.remove('hidden');
+    modal.classList.add('active');
+    if (input) {
+        input.value = "";
+        input.focus();
+    }
+    
+    const handleClose = () => {
+        modal.classList.remove('active');
+        modal.classList.add('hidden');
+        // Clean up listeners
+        submitBtn.replaceWith(submitBtn.cloneNode(true));
+        cancelBtn.replaceWith(cancelBtn.cloneNode(true));
+    };
+    
+    const handleSubmit = () => {
+        const ans = input.value.trim().toUpperCase();
+        if (ans === "6-B" || ans === "VI-B") {
+            handleClose();
+            showDevEditorModal();
+        } else {
+            // Access denied visual
+            input.value = "ACCESS DENIED";
+            input.style.color = "var(--red)";
+            input.style.borderColor = "var(--red)";
+            setTimeout(() => {
+                input.style.color = "#fff";
+                input.style.borderColor = "var(--cyan)";
+                handleClose();
+            }, 1500);
+        }
+    };
+    
+    // Bind listeners
+    submitBtn.addEventListener('click', handleSubmit);
+    cancelBtn.addEventListener('click', handleClose);
+    
+    // Bind enter key on input
+    input.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') handleSubmit();
+    });
+}
+
+// Dev configurations editor modal
+function showDevEditorModal() {
+    const modal = document.getElementById('dev-editor-modal');
+    const closeBtn = document.getElementById('btn-dev-close');
+    if (!modal) return;
+    
+    modal.classList.remove('hidden');
+    modal.classList.add('active');
+    
+    // Render current tables
+    renderEditorMissions();
+    renderEditorWeapons();
+    renderEditorAbilities();
+    
+    // Setup tab button toggles
+    const tabButtons = document.querySelectorAll('.dev-tab-btn');
+    const tabPanes = document.querySelectorAll('.dev-tab-pane');
+    
+    tabButtons.forEach(btn => {
+        btn.onclick = () => {
+            tabButtons.forEach(b => {
+                b.style.border = '1px solid rgba(255,255,255,0.1)';
+                b.style.background = 'transparent';
+                b.style.color = '#fff';
+            });
+            tabPanes.forEach(pane => pane.classList.add('hidden'));
+            
+            btn.style.border = '1px solid var(--cyan)';
+            btn.style.background = 'rgba(0, 240, 255, 0.1)';
+            btn.style.color = 'var(--cyan)';
+            
+            const targetPaneId = btn.id.replace('tab-btn-', 'dev-tab-');
+            const targetPane = document.getElementById(targetPaneId);
+            if (targetPane) targetPane.classList.remove('hidden');
+        };
+    });
+    
+    // Default select first tab
+    if (tabButtons[0]) tabButtons[0].click();
+    
+    // Bind dev console buttons
+    const applyBtn = document.getElementById('btn-dev-apply');
+    const transmitBtn = document.getElementById('btn-dev-transmit');
+    const exportBtn = document.getElementById('btn-dev-export');
+    
+    if (applyBtn) {
+        applyBtn.onclick = () => {
+            renderMissions();
+            renderWeapons();
+            renderAbilities();
+            
+            // Auto unlock all missions keys
+            const mKeys = Object.keys(MISSIONS).map(Number);
+            unlockedMissions = Array.from(new Set([...unlockedMissions, ...mKeys]));
+            
+            addLogToTerminal("[SUCCESS] Config applied successfully to play session.");
+            addLogToTerminal("[SYS_LOG] Mission select list rebuilt.");
+            addLogToTerminal("[SYS_LOG] Loadout grids rebuilt.");
+            alert("Configuration applied! Your custom items/weapons/missions are now selectable in the menu.");
+        };
+    }
+    
+    if (transmitBtn) {
+        transmitBtn.onclick = () => {
+            addLogToTerminal("[COMPILE] Packaging configuration bundle...");
+            setTimeout(() => {
+                addLogToTerminal("[RESOLVE] Resolving assets and dependencies...");
+            }, 500);
+            setTimeout(() => {
+                addLogToTerminal("[TRANSMIT] Connecting to neural link node...");
+            }, 1000);
+            setTimeout(() => {
+                addLogToTerminal("[SEND] Sending data blocks (88.4 KB)...");
+            }, 1500);
+            setTimeout(() => {
+                addLogToTerminal("[STATUS] WAITING FOR NEURAL APPROVAL...");
+                addLogToTerminal(">>> STATUS: PENDING. Copy-paste configuration to AI to write it permanently!");
+                
+                // Copy to clipboard
+                const config = { MISSIONS, WEAPON_STATS, ABILITY_STATS };
+                const json = JSON.stringify(config, null, 2);
+                navigator.clipboard.writeText(json).then(() => {
+                    alert("Config bundle copied to clipboard! Share it in the chat for final approval and permanent storage.");
+                }).catch(() => {
+                    alert("Transmit pending approval! Use the EXPORT button to download your configuration file.");
+                });
+            }, 2200);
+        };
+    }
+    
+    if (exportBtn) {
+        exportBtn.onclick = () => {
+            const config = { MISSIONS, WEAPON_STATS, ABILITY_STATS };
+            const json = JSON.stringify(config, null, 2);
+            
+            const blob = new Blob([json], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'dev_config.json';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            
+            addLogToTerminal("[EXPORT] Exported config to dev_config.json.");
+        };
+    }
+    
+    // Bind Close Editor
+    closeBtn.onclick = () => {
+        modal.classList.remove('active');
+        modal.classList.add('hidden');
+    };
+    
+    // Bind Add Mission
+    const addMissionBtn = document.getElementById('btn-add-mission');
+    if (addMissionBtn) {
+        addMissionBtn.onclick = () => {
+            const title = document.getElementById('add-m-title').value.trim().toUpperCase() || "CUSTOM MISSION";
+            const story = document.getElementById('add-m-story').value.trim() || "Clear all rogue hostiles in the grid perimeter.";
+            const xp = parseInt(document.getElementById('add-m-xp').value) || 2000;
+            const drones = parseInt(document.getElementById('add-m-drones').value) || 0;
+            const soldiers = parseInt(document.getElementById('add-m-soldiers').value) || 0;
+            const turrets = parseInt(document.getElementById('add-m-turrets').value) || 0;
+            const beacons = parseInt(document.getElementById('add-m-beacons').value) || 0;
+            const bosses = parseInt(document.getElementById('add-m-bosses').value) || 0;
+            
+            // Find next available mission index
+            const keys = Object.keys(MISSIONS).map(Number);
+            const nextIndex = keys.length > 0 ? Math.max(...keys) + 1 : 1;
+            
+            MISSIONS[nextIndex] = {
+                title: title,
+                subtitle: "GRID TELEMETRY SECURED",
+                story: story,
+                xp: xp,
+                dronesCount: drones,
+                soldiersCount: soldiers,
+                turretsCount: turrets,
+                beaconsCount: beacons,
+                bossesCount: bosses,
+                ammoCratesCount: Math.max(3, drones + soldiers + turrets),
+                isCustom: true
+            };
+            
+            // Clear inputs
+            document.getElementById('add-m-title').value = "";
+            document.getElementById('add-m-story').value = "";
+            
+            renderEditorMissions();
+            addLogToTerminal(`[SYS_LOG] Created custom mission: ${title} at MISSION ${nextIndex}`);
+        };
+    }
+    
+    // Bind Add Weapon
+    const addWeaponBtn = document.getElementById('btn-add-weapon');
+    if (addWeaponBtn) {
+        addWeaponBtn.onclick = () => {
+            const key = document.getElementById('add-w-key').value.trim();
+            const name = document.getElementById('add-w-name').value.trim() || key;
+            const fireRate = parseInt(document.getElementById('add-w-rate').value) || 100;
+            const damage = parseInt(document.getElementById('add-w-damage').value) || 30;
+            const clip = parseInt(document.getElementById('add-w-clip').value) || 30;
+            const pellets = parseInt(document.getElementById('add-w-pellets').value) || 1;
+            
+            if (!key) {
+                alert("Weapon ID key is required.");
+                return;
+            }
+            
+            WEAPON_STATS[key] = {
+                name: name,
+                fireRate: fireRate,
+                baseSpread: pellets > 1 ? 0.08 : 0.02,
+                recoilSpreadAdd: pellets > 1 ? 0.02 : 0.01,
+                damage: damage,
+                clip: clip,
+                pellets: pellets
+            };
+            
+            document.getElementById('add-w-key').value = "";
+            document.getElementById('add-w-name').value = "";
+            
+            renderEditorWeapons();
+            addLogToTerminal(`[SYS_LOG] Registered new weapon structure: ${name} (${key})`);
+        };
+    }
+    
+    // Bind Add Ability
+    const addAbilityBtn = document.getElementById('btn-add-ability');
+    if (addAbilityBtn) {
+        addAbilityBtn.onclick = () => {
+            const key = document.getElementById('add-a-key').value.trim();
+            const name = document.getElementById('add-a-name').value.trim() || key;
+            const cooldown = parseInt(document.getElementById('add-a-cooldown').value) || 30000;
+            const duration = parseInt(document.getElementById('add-a-duration').value) || 5000;
+            const passive = document.getElementById('add-a-passive').checked;
+            
+            if (!key) {
+                alert("Ability ID key is required.");
+                return;
+            }
+            
+            ABILITY_STATS[key] = {
+                name: name,
+                cooldown: cooldown,
+                duration: duration,
+                passive: passive
+            };
+            
+            document.getElementById('add-a-key').value = "";
+            document.getElementById('add-a-name').value = "";
+            document.getElementById('add-a-passive').checked = false;
+            
+            renderEditorAbilities();
+            addLogToTerminal(`[SYS_LOG] Registered new character ability: ${name} (${key})`);
+        };
+    }
+}
+
+// Dev log helper
+function addLogToTerminal(text) {
+    const term = document.getElementById('dev-terminal');
+    if (!term) return;
+    const div = document.createElement('div');
+    div.textContent = text;
+    term.appendChild(div);
+    term.scrollTop = term.scrollHeight;
+}
+
+// Dev editor missions list renderer
+function renderEditorMissions() {
+    const listEl = document.getElementById('dev-mission-list');
+    if (!listEl) return;
+    listEl.innerHTML = '';
+    
+    Object.keys(MISSIONS).map(Number).sort((a, b) => a - b).forEach(id => {
+        const m = MISSIONS[id];
+        const row = document.createElement('div');
+        row.style.display = 'flex';
+        row.style.justifyContent = 'space-between';
+        row.style.alignItems = 'center';
+        row.style.background = 'rgba(255, 255, 255, 0.03)';
+        row.style.border = '1px solid rgba(255, 255, 255, 0.08)';
+        row.style.padding = '10px 15px';
+        row.style.borderRadius = '4px';
+        
+        row.innerHTML = `
+            <div>
+                <strong class="glow-cyan" style="font-family: 'Orbitron'; font-size: 0.95rem;">MISSION ${id}: ${m.title}</strong>
+                <div style="font-size: 0.8rem; color: rgba(255,255,255,0.5); margin-top: 3px;">
+                    Drones: ${m.dronesCount || 0} | Soldiers: ${m.soldiersCount || 0} | Turrets: ${m.turretsCount || 0} | Beacons: ${m.beaconsCount || 0} | Cores: ${m.bossesCount || 0}
+                </div>
+            </div>
+            <button class="btn glow-magenta-btn" style="padding: 4px 10px; font-size: 0.75rem; height: auto;">DELETE</button>
+        `;
+        
+        const deleteBtn = row.querySelector('button');
+        deleteBtn.addEventListener('click', () => {
+            if (Object.keys(MISSIONS).length <= 1) {
+                alert("Cannot delete all missions. At least one mission must remain.");
+                return;
+            }
+            delete MISSIONS[id];
+            if (currentMissionId === id) {
+                currentMissionId = 1;
+            }
+            renderEditorMissions();
+            addLogToTerminal(`Deleted mission: MISSION ${id}`);
+        });
+        
+        listEl.appendChild(row);
+    });
+}
+
+// Dev editor weapons list renderer
+function renderEditorWeapons() {
+    const listEl = document.getElementById('dev-weapon-list');
+    if (!listEl) return;
+    listEl.innerHTML = '';
+    
+    Object.keys(WEAPON_STATS).forEach(key => {
+        const w = WEAPON_STATS[key];
+        const row = document.createElement('div');
+        row.style.display = 'flex';
+        row.style.justifyContent = 'space-between';
+        row.style.alignItems = 'center';
+        row.style.background = 'rgba(255, 255, 255, 0.03)';
+        row.style.border = '1px solid rgba(255, 255, 255, 0.08)';
+        row.style.padding = '10px 15px';
+        row.style.borderRadius = '4px';
+        
+        row.innerHTML = `
+            <div>
+                <strong class="glow-cyan" style="font-family: 'Orbitron'; font-size: 0.95rem;">${w.name} (${key})</strong>
+                <div style="font-size: 0.8rem; color: rgba(255,255,255,0.5); margin-top: 3px;">
+                    Damage: ${w.damage} | Clip: ${w.clip} | Rate: ${w.fireRate}ms | Pellets: ${w.pellets || 1}
+                </div>
+            </div>
+            <button class="btn glow-magenta-btn" style="padding: 4px 10px; font-size: 0.75rem; height: auto;">DELETE</button>
+        `;
+        
+        const deleteBtn = row.querySelector('button');
+        deleteBtn.addEventListener('click', () => {
+            if (Object.keys(WEAPON_STATS).length <= 1) {
+                alert("Cannot delete all weapons. At least one weapon must remain.");
+                return;
+            }
+            delete WEAPON_STATS[key];
+            if (primaryWeapon === key) primaryWeapon = Object.keys(WEAPON_STATS)[0];
+            if (secondaryWeapon === key) secondaryWeapon = Object.keys(WEAPON_STATS)[0];
+            renderEditorWeapons();
+            addLogToTerminal(`Deleted weapon: ${key}`);
+        });
+        
+        listEl.appendChild(row);
+    });
+}
+
+// Dev editor abilities list renderer
+function renderEditorAbilities() {
+    const listEl = document.getElementById('dev-ability-list');
+    if (!listEl) return;
+    listEl.innerHTML = '';
+    
+    Object.keys(ABILITY_STATS).forEach(key => {
+        const a = ABILITY_STATS[key];
+        const row = document.createElement('div');
+        row.style.display = 'flex';
+        row.style.justifyContent = 'space-between';
+        row.style.alignItems = 'center';
+        row.style.background = 'rgba(255, 255, 255, 0.03)';
+        row.style.border = '1px solid rgba(255, 255, 255, 0.08)';
+        row.style.padding = '10px 15px';
+        row.style.borderRadius = '4px';
+        
+        row.innerHTML = `
+            <div>
+                <strong class="glow-cyan" style="font-family: 'Orbitron'; font-size: 0.95rem;">${a.name} (${key})</strong>
+                <div style="font-size: 0.8rem; color: rgba(255,255,255,0.5); margin-top: 3px;">
+                    Cooldown: ${a.cooldown / 1000}s | Duration: ${a.duration / 1000}s | Type: ${a.passive ? 'Passive' : 'Active'}
+                </div>
+            </div>
+            <button class="btn glow-magenta-btn" style="padding: 4px 10px; font-size: 0.75rem; height: auto;">DELETE</button>
+        `;
+        
+        const deleteBtn = row.querySelector('button');
+        deleteBtn.addEventListener('click', () => {
+            if (Object.keys(ABILITY_STATS).length <= 1) {
+                alert("Cannot delete all abilities. At least one ability must remain.");
+                return;
+            }
+            delete ABILITY_STATS[key];
+            if (selectedAbility === key) selectedAbility = Object.keys(ABILITY_STATS)[0];
+            renderEditorAbilities();
+            addLogToTerminal(`Deleted ability: ${key}`);
+        });
+        
+        listEl.appendChild(row);
+    });
 }
 
