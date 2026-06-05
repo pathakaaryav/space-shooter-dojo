@@ -243,6 +243,24 @@ let currentWeaponStats = null;
 let maxClip = 30;
 let ammoCrates = [];
 
+let medkitCount = 2;
+let medkits = [];
+let isHealing = false;
+let healTimer = 0;
+const HEAL_DURATION = 3000;
+let droppedWeapons = [];
+
+const WEAPON_VISUALS = {
+    'MP5': { color: 0xffaa00, speed: 0.45, thickness: 0.04 },
+    'UMP': { color: 0xffbb00, speed: 0.45, thickness: 0.04 },
+    'AK47': { color: 0xff3300, speed: 0.50, thickness: 0.05 },
+    'AWM': { color: 0x00ffff, speed: 0.85, thickness: 0.07 },
+    'CyberRifle': { color: 0x39ff14, speed: 0.52, thickness: 0.04 },
+    'PlasmaShotgun': { color: 0xff0055, speed: 0.38, thickness: 0.05 },
+    'PulseSniper': { color: 0xda70d6, speed: 0.95, thickness: 0.08 },
+    'NeonSMG': { color: 0x00f0ff, speed: 0.55, thickness: 0.03 }
+};
+
 const WEAPON_STATS = {
     'MP5': { name: 'MP5', fireRate: 90, baseSpread: 0.015, recoilSpreadAdd: 0.008, damage: 35, clip: 30, pellets: 1 },
     'UMP': { name: 'UMP', fireRate: 110, baseSpread: 0.025, recoilSpreadAdd: 0.01, damage: 45, clip: 35, pellets: 1 },
@@ -539,6 +557,14 @@ function clearActiveLevel() {
     ammoCrates.forEach(c => scene.remove(c));
     ammoCrates = [];
 
+    // Clear medkits
+    medkits.forEach(m => scene.remove(m.mesh));
+    medkits = [];
+
+    // Clear dropped weapons
+    droppedWeapons.forEach(w => scene.remove(w.mesh));
+    droppedWeapons = [];
+
     drones = [];
     droneLaserBeams = [];
     tracers = [];
@@ -557,6 +583,13 @@ function loadMissionLevel(missionId) {
     health = 100;
     armor = 100;
 
+    medkitCount = 2;
+    isHealing = false;
+    const healContainer = document.getElementById('heal-progress-container');
+    if (healContainer) healContainer.classList.add('hidden');
+    const promptContainer = document.getElementById('interaction-prompt');
+    if (promptContainer) promptContainer.classList.add('hidden');
+
     selectedWeapon = primaryWeapon;
     activeSlot = 1;
     currentWeaponStats = WEAPON_STATS[selectedWeapon];
@@ -565,6 +598,8 @@ function loadMissionLevel(missionId) {
     ammoClip2 = WEAPON_STATS[secondaryWeapon].clip;
     ammoClip = ammoClip1;
     ammoReserve = 180; // Larger shared reserve pool
+
+    if (typeof updatePlayerWeaponVisuals === 'function') updatePlayerWeaponVisuals();
 
     isReloading = false;
     isScoped = false;
@@ -1120,6 +1155,7 @@ function setupInputListeners() {
             maxClip = currentWeaponStats.clip;
             ammoClip = ammoClip1;
             isReloading = false;
+            if (typeof updatePlayerWeaponVisuals === 'function') updatePlayerWeaponVisuals();
             updateHUD();
         }
         if (key === '2' && activeSlot !== 2 && gameState === 'PLAYING') {
@@ -1130,6 +1166,7 @@ function setupInputListeners() {
             maxClip = currentWeaponStats.clip;
             ammoClip = ammoClip2;
             isReloading = false;
+            if (typeof updatePlayerWeaponVisuals === 'function') updatePlayerWeaponVisuals();
             updateHUD();
         }
         
@@ -1142,6 +1179,14 @@ function setupInputListeners() {
         }
         if (key === '4' && gameState === 'PLAYING') {
             throwGrenade();
+        }
+        if ((key === '6' || key === 'h') && gameState === 'PLAYING') {
+            if (typeof startHealing === 'function') startHealing();
+        }
+        if (key === 'f' && gameState === 'PLAYING') {
+            if (window.activeInteractionWeapon && typeof swapWeapon === 'function') {
+                swapWeapon(window.activeInteractionWeapon);
+            }
         }
     });
 
@@ -1415,17 +1460,22 @@ function reloadWeapon() {
 }
 
 // Damage entities
-function damageDrone(drone, hitPoint) {
+function damageDrone(drone, hitPoint, damageAmount) {
     window.sounds.playHitmarker();
     spawnSparks(hitPoint, new THREE.Color(0xff0055), 10);
     
-    drone.userData.health -= currentWeaponStats.damage;
+    const damage = damageAmount !== undefined ? damageAmount : currentWeaponStats.damage;
+    drone.userData.health -= damage;
     if (drone.userData.health <= 0) {
         score += 150;
         window.sounds.playExplosion();
         spawnSparks(drone.position, new THREE.Color(0xff0055), 24);
 
-        if (typeof spawnAmmo === 'function') spawnAmmo(drone.position.x, 0.5, drone.position.z);
+        if (Math.random() < 0.3) {
+            if (typeof spawnMedkit === 'function') spawnMedkit(drone.position.x, 0.5, drone.position.z);
+        } else {
+            if (typeof spawnAmmo === 'function') spawnAmmo(drone.position.x, 0.5, drone.position.z);
+        }
         scene.remove(drone);
         const idx = drones.indexOf(drone);
         if (idx > -1) drones.splice(idx, 1);
@@ -1435,11 +1485,12 @@ function damageDrone(drone, hitPoint) {
     }
 }
 
-function damageTurret(turret, hitPoint) {
+function damageTurret(turret, hitPoint, damageAmount) {
     window.sounds.playHitmarker();
     spawnSparks(hitPoint, new THREE.Color(0xff0055), 12);
     
-    turret.userData.health -= currentWeaponStats.damage; // 4 shot kill
+    const damage = damageAmount !== undefined ? damageAmount : currentWeaponStats.damage;
+    turret.userData.health -= damage; // 4 shot kill
     if (turret.userData.health <= 0) {
         score += 300;
         window.sounds.playExplosion();
@@ -1454,11 +1505,12 @@ function damageTurret(turret, hitPoint) {
     }
 }
 
-function damageBeacon(beacon, hitPoint) {
+function damageBeacon(beacon, hitPoint, damageAmount) {
     window.sounds.playHitmarker();
     spawnSparks(hitPoint, new THREE.Color(0x39ff14), 10);
     
-    beacon.userData.health -= currentWeaponStats.damage;
+    const damage = damageAmount !== undefined ? damageAmount : currentWeaponStats.damage;
+    beacon.userData.health -= damage;
     if (beacon.userData.health <= 0) {
         score += 200;
         window.sounds.playExplosion();
@@ -1473,7 +1525,7 @@ function damageBeacon(beacon, hitPoint) {
     }
 }
 
-function damageBoss(hitMesh, bossGroup, hitPoint) {
+function damageBoss(hitMesh, bossGroup, hitPoint, damageAmount) {
     // If shield rotates in front of bullet path
     const shieldL = bossGroup.userData.shieldL;
     const shieldR = bossGroup.userData.shieldR;
@@ -1489,7 +1541,8 @@ function damageBoss(hitMesh, bossGroup, hitPoint) {
     window.sounds.playHitmarker();
     spawnSparks(hitPoint, new THREE.Color(0xff1111), 15);
     
-    bossGroup.userData.health -= currentWeaponStats.damage;
+    const damage = damageAmount !== undefined ? damageAmount : currentWeaponStats.damage;
+    bossGroup.userData.health -= damage;
     
     // Core health damage feedback (color pulsing)
     hitMesh.material.color.setHex(0xffffff);
@@ -1674,6 +1727,9 @@ function animate() {
         updateLevelEntities(now);
         updateSoldierAI(now);
         if (typeof updateAmmoPickups === 'function') updateAmmoPickups();
+        if (typeof updateMedkitPickups === 'function') updateMedkitPickups();
+        if (typeof updateHealingProgress === 'function') updateHealingProgress(dt);
+        if (typeof updateDroppedWeaponPickups === 'function') updateDroppedWeaponPickups();
         if (typeof updateAbilityState === 'function') updateAbilityState(dt);
         if (typeof updateGrenades === 'function') updateGrenades(dt);
         updateTracersAndParticles();
@@ -1767,7 +1823,7 @@ function updateTracersAndParticles() {
 
         const dist = beam.mesh.position.distanceTo(player.position);
         if (dist < 1.4) {
-            damagePlayer(12);
+            damagePlayer(beam.damage || 12);
             scene.remove(beam.mesh);
             beam.mesh.geometry.dispose();
             beam.mesh.material.dispose();
@@ -2061,38 +2117,36 @@ function updateLevelEntities(now) {
         }
     }
 
-    // 2. Update Mission 2 Stationary turrets (Stealth tracking check!)
-    if (currentMissionId === 2) {
-        const speed = new THREE.Vector2(velocity.x, velocity.z).length();
+    // 2. Update Stationary turrets (Stealth tracking check!)
+    const speed = new THREE.Vector2(velocity.x, velocity.z).length();
+    
+    turrets.forEach(tur => {
+        const dist = tur.position.distanceTo(pPos);
         
-        turrets.forEach(tur => {
-            const dist = tur.position.distanceTo(pPos);
-            
-            // Aim turret head to point at player
-            const core = tur.userData.coreMesh;
-            const lookDir = pPos.clone().sub(tur.position).normalize();
-            core.quaternion.setFromUnitVectors(new THREE.Vector3(0, 0, -1), lookDir);
+        // Aim turret head to point at player
+        const core = tur.userData.coreMesh;
+        const lookDir = pPos.clone().sub(tur.position).normalize();
+        core.quaternion.setFromUnitVectors(new THREE.Vector3(0, 0, -1), lookDir);
 
-            if (dist < tur.userData.scanRadius) {
-                // Turret will open fire IF the player is moving fast (not walking or crouching!)
-                const isSilent = isCrouching || (isWalking && speed < WALK_SPEED + 0.01) || speed < 0.015;
+        if (dist < tur.userData.scanRadius) {
+            // Turret will open fire IF the player is moving fast (not walking or crouching!)
+            const isSilent = isCrouching || (isWalking && speed < WALK_SPEED + 0.01) || speed < 0.015;
+            
+            if (!isSilent) {
+                // Running detected! Alert flash & fire
+                core.material.color.setHex(0xffffff); // Flash white alert
                 
-                if (!isSilent) {
-                    // Running detected! Alert flash & fire
-                    core.material.color.setHex(0xffffff); // Flash white alert
-                    
-                    if (now - tur.userData.lastFire > 1200) {
-                        tur.userData.lastFire = now;
-                        fireEnemyLaser(tur.position.clone().add(new THREE.Vector3(0, 1.0, 0)), 0xff0055);
-                    }
-                } else {
-                    core.material.color.setHex(0xff0055); // Reset normal glowing pink scanner
+                if (now - tur.userData.lastFire > 1200) {
+                    tur.userData.lastFire = now;
+                    fireEnemyLaser(tur.position.clone().add(new THREE.Vector3(0, 1.0, 0)), 0xff0055);
                 }
             } else {
-                core.material.color.setHex(0xff0055);
+                if (core && core.material) core.material.color.setHex(0xff0055); // Reset normal glowing pink scanner
             }
-        });
-    }
+        } else {
+            if (core && core.material) core.material.color.setHex(0xff0055);
+        }
+    });
 
     // 3. Update Mission 3 Beacons (spinning cylinders visual effect)
     if (currentMissionId === 3) {
@@ -2117,23 +2171,43 @@ function updateLevelEntities(now) {
 
 // Spawn hostile lasers heading towards player
 function fireEnemyLaser(startPoint, beamColorHex) {
-    const targetPoint = player.position.clone().add(new THREE.Vector3(0, -0.2, 0));
-    const dir = targetPoint.clone().sub(startPoint).normalize();
-
-    const beamGeo = new THREE.CylinderGeometry(0.04, 0.04, 0.8, 4);
-    const beamMat = new THREE.MeshBasicMaterial({ color: beamColorHex });
-    const beamMesh = new THREE.Mesh(beamGeo, beamMat);
+    if (!currentWeaponStats) currentWeaponStats = WEAPON_STATS[selectedWeapon];
     
-    beamMesh.position.copy(startPoint);
-    beamMesh.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), dir);
-
-    scene.add(beamMesh);
-
-    droneLaserBeams.push({
-        mesh: beamMesh,
-        velocity: dir.multiplyScalar(0.24),
-        spawnTime: Date.now()
-    });
+    // Get visuals for current gun
+    const gunVisuals = WEAPON_VISUALS[selectedWeapon] || { color: 0xff0055, speed: 0.45, thickness: 0.04 };
+    const pellets = currentWeaponStats.pellets || 1;
+    const damage = Math.max(4, Math.round(currentWeaponStats.damage * 0.2)); // Balanced bot damage: 20% of player weapon damage (min 4)
+    
+    const targetPoint = player.position.clone().add(new THREE.Vector3(0, -0.2, 0));
+    
+    for (let p = 0; p < pellets; p++) {
+        let dir = targetPoint.clone().sub(startPoint).normalize();
+        
+        // Add spread if shotgun/multiple pellets
+        if (pellets > 1) {
+            const spread = 0.06;
+            dir.x += (Math.random() - 0.5) * spread;
+            dir.y += (Math.random() - 0.5) * spread;
+            dir.z += (Math.random() - 0.5) * spread;
+            dir.normalize();
+        }
+        
+        const thick = gunVisuals.thickness;
+        const beamGeo = new THREE.CylinderGeometry(thick, thick, pellets > 1 ? 0.4 : 1.0, 4);
+        const beamMat = new THREE.MeshBasicMaterial({ color: gunVisuals.color });
+        const beamMesh = new THREE.Mesh(beamGeo, beamMat);
+        
+        beamMesh.position.copy(startPoint);
+        beamMesh.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), dir);
+        scene.add(beamMesh);
+        
+        droneLaserBeams.push({
+            mesh: beamMesh,
+            velocity: dir.clone().multiplyScalar(gunVisuals.speed),
+            damage: damage,
+            spawnTime: Date.now()
+        });
+    }
 }
 
 // Boss circle laser wave blast
@@ -2365,11 +2439,21 @@ function spawnSoldier(x, z) {
     soldierGroup.add(rightLeg);
 
     // Gun
+    const wKeys = Object.keys(WEAPON_STATS);
+    const chosenWeapon = wKeys[Math.floor(Math.random() * wKeys.length)];
     const gunGeo = new THREE.BoxGeometry(0.1, 0.2, 1.0);
     const gunMat = new THREE.MeshStandardMaterial({ color: 0x111111 });
     const gun = new THREE.Mesh(gunGeo, gunMat);
     gun.position.set(0.5, 1.3, -0.4);
     soldierGroup.add(gun);
+
+    // Glowing neon stripe matching the gun type!
+    const visuals = WEAPON_VISUALS[chosenWeapon] || { color: 0xffff00 };
+    const gunStripGeo = new THREE.BoxGeometry(0.12, 0.05, 0.8);
+    const gunStripMat = new THREE.MeshBasicMaterial({ color: visuals.color });
+    const gunStrip = new THREE.Mesh(gunStripGeo, gunStripMat);
+    gunStrip.position.set(0.5, 1.4, -0.4);
+    soldierGroup.add(gunStrip);
 
     scene.add(soldierGroup);
 
@@ -2379,9 +2463,10 @@ function spawnSoldier(x, z) {
         state: 'PATROL',
         targetWaypoint: new THREE.Vector3(x + (Math.random()-0.5)*10, 0, z + (Math.random()-0.5)*10),
         lastAttack: Date.now() + Math.random() * 1000,
-        attackInterval: 400 + Math.random() * 200, // Faster firing than robots
+        attackInterval: 1200 + Math.random() * 400, // Balanced soldier firing interval (1.2 - 1.6s) so they don't laser spam
         speed: 0.1,
-        color: 0xffff00 // Yellow tracers
+        weaponKey: chosenWeapon,
+        color: visuals.color
     };
     soldiers.push(soldierGroup);
 }
@@ -2436,17 +2521,28 @@ function updateSoldierAI(now) {
     });
 }
 
-function damageSoldier(soldierGroup, hitPoint) {
+function damageSoldier(soldierGroup, hitPoint, damageAmount) {
     window.sounds.playHitmarker();
     spawnSparks(hitPoint, new THREE.Color(0xff0000), 10); // Red blood/sparks
 
-    soldierGroup.userData.health -= currentWeaponStats.damage;
+    const damage = damageAmount !== undefined ? damageAmount : currentWeaponStats.damage;
+    soldierGroup.userData.health -= damage;
     if (soldierGroup.userData.health <= 0) {
         score += 300;
         window.sounds.playExplosion();
         spawnSparks(soldierGroup.position.clone().add(new THREE.Vector3(0,1,0)), new THREE.Color(0xff0000), 30);
 
-        if (typeof spawnAmmo === 'function') spawnAmmo(soldierGroup.position.x, 0.5, soldierGroup.position.z);
+        if (Math.random() < 0.3) {
+            if (typeof spawnMedkit === 'function') spawnMedkit(soldierGroup.position.x, 0.5, soldierGroup.position.z);
+        } else {
+            if (typeof spawnAmmo === 'function') spawnAmmo(soldierGroup.position.x, 0.5, soldierGroup.position.z);
+        }
+
+        const wKey = soldierGroup.userData.weaponKey || 'MP5';
+        if (typeof spawnDroppedWeapon === 'function') {
+            spawnDroppedWeapon(soldierGroup.position.x, 0.2, soldierGroup.position.z, wKey, WEAPON_STATS[wKey].clip);
+        }
+
         scene.remove(soldierGroup);
         const idx = soldiers.indexOf(soldierGroup);
         if (idx > -1) soldiers.splice(idx, 1);
@@ -2717,17 +2813,34 @@ function explodeGrenade(pos) {
     spawnSparks(pos, new THREE.Color(0xff8800), 50); // Big orange explosion
     
     // Blast radius
-    const blastRadius = 12.0;
-    const blastDamage = 150;
+    const blastRadius = 25.0;
+    const blastDamage = 250;
     
     soldiers.forEach(s => {
         if (s.position.distanceTo(pos) < blastRadius) {
-            if (typeof damageSoldier === 'function') damageSoldier(s, s.position);
+            if (typeof damageSoldier === 'function') damageSoldier(s, s.position, blastDamage);
         }
     });
     drones.forEach(d => {
         if (d.position.distanceTo(pos) < blastRadius) {
-            if (typeof damageDrone === 'function') damageDrone(d, d.position);
+            if (typeof damageDrone === 'function') damageDrone(d, d.position, blastDamage);
+        }
+    });
+    turrets.forEach(t => {
+        if (t.position.distanceTo(pos) < blastRadius) {
+            if (typeof damageTurret === 'function') damageTurret(t, t.position, blastDamage);
+        }
+    });
+    beacons.forEach(b => {
+        if (b.position.distanceTo(pos) < blastRadius) {
+            if (typeof damageBeacon === 'function') damageBeacon(b, b.position, blastDamage);
+        }
+    });
+    bosses.forEach(boss => {
+        if (boss.position.distanceTo(pos) < blastRadius) {
+            // Find a non-shield child or just pass the first child
+            const hitMesh = boss.children[0] || boss;
+            if (typeof damageBoss === 'function') damageBoss(hitMesh, boss, boss.position, blastDamage);
         }
     });
 }
@@ -3614,6 +3727,231 @@ function renderEditorAbilities() {
         });
         
         listEl.appendChild(row);
+    });
+}
+
+// --- Medkit Spawner & Update Systems ---
+function spawnMedkit(x, y, z) {
+    const medkitGroup = new THREE.Group();
+    medkitGroup.position.set(x, y, z);
+    
+    // Green box body
+    const bodyGeo = new THREE.BoxGeometry(0.5, 0.5, 0.3);
+    const bodyMat = new THREE.MeshStandardMaterial({ color: 0x009933, roughness: 0.5, metalness: 0.2 });
+    const body = new THREE.Mesh(bodyGeo, bodyMat);
+    medkitGroup.add(body);
+    
+    // White cross
+    const crossMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
+    const crossH = new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.06, 0.32), crossMat);
+    const crossV = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.24, 0.32), crossMat);
+    crossH.position.y = 0.01;
+    crossV.position.y = 0.01;
+    medkitGroup.add(crossH);
+    medkitGroup.add(crossV);
+    
+    scene.add(medkitGroup);
+    medkits.push({
+        mesh: medkitGroup,
+        yBase: y,
+        floatOffset: Math.random() * Math.PI * 2
+    });
+}
+
+function updateMedkitPickups() {
+    if (gameState !== 'PLAYING') return;
+    const now = performance.now();
+    
+    const medkitValEl = document.getElementById('medkit-count-val');
+    if (medkitValEl) {
+        medkitValEl.textContent = medkitCount;
+    }
+    
+    for (let i = medkits.length - 1; i >= 0; i--) {
+        const item = medkits[i];
+        item.mesh.position.y = item.yBase + Math.sin(now * 0.003 + item.floatOffset) * 0.15;
+        item.mesh.rotation.y += 0.02;
+        
+        const dist = player.position.distanceTo(item.mesh.position);
+        if (dist < 2.0) {
+            medkitCount++;
+            window.sounds.playShieldHit();
+            spawnSparks(item.mesh.position, new THREE.Color(0x39ff14), 15);
+            scene.remove(item.mesh);
+            medkits.splice(i, 1);
+            if (medkitValEl) {
+                medkitValEl.textContent = medkitCount;
+            }
+        }
+    }
+}
+
+function startHealing() {
+    if (gameState !== 'PLAYING') return;
+    if (medkitCount <= 0 || health >= 100 || isHealing) return;
+    
+    isHealing = true;
+    healTimer = HEAL_DURATION;
+    
+    const container = document.getElementById('heal-progress-container');
+    if (container) {
+        container.classList.remove('hidden');
+    }
+}
+
+function updateHealingProgress(dt) {
+    if (gameState !== 'PLAYING') return;
+    if (!isHealing) return;
+    
+    const speed = new THREE.Vector2(velocity.x, velocity.z).length();
+    if (speed > 0.03 || !isGrounded) {
+        isHealing = false;
+        const container = document.getElementById('heal-progress-container');
+        if (container) {
+            container.classList.add('hidden');
+        }
+        window.sounds.playPlayerHit();
+        return;
+    }
+    
+    healTimer -= dt;
+    const progressFill = document.getElementById('heal-progress-fill');
+    if (progressFill) {
+        const pct = ((HEAL_DURATION - healTimer) / HEAL_DURATION) * 100;
+        progressFill.style.width = `${pct}%`;
+    }
+    
+    if (healTimer <= 0) {
+        isHealing = false;
+        medkitCount--;
+        health = Math.min(100, health + 75);
+        updateHUD();
+        spawnSparks(player.position.clone().add(new THREE.Vector3(0, -0.5, 0)), new THREE.Color(0x39ff14), 30);
+        window.sounds.playShieldHit();
+        
+        const container = document.getElementById('heal-progress-container');
+        if (container) {
+            container.classList.add('hidden');
+        }
+        const medkitValEl = document.getElementById('medkit-count-val');
+        if (medkitValEl) {
+            medkitValEl.textContent = medkitCount;
+        }
+    }
+}
+
+// --- Dropped Weapon & Swapping Systems ---
+function spawnDroppedWeapon(x, y, z, weaponKey, ammoClip) {
+    const group = new THREE.Group();
+    group.position.set(x, y, z);
+    
+    const gunVisuals = WEAPON_VISUALS[weaponKey] || { color: 0xff0055 };
+    const bodyGeo = new THREE.BoxGeometry(0.12, 0.18, 0.85);
+    const bodyMat = new THREE.MeshStandardMaterial({ color: 0x1a1a24, roughness: 0.4 });
+    const body = new THREE.Mesh(bodyGeo, bodyMat);
+    group.add(body);
+    
+    const stripGeo = new THREE.BoxGeometry(0.13, 0.04, 0.6);
+    const stripMat = new THREE.MeshBasicMaterial({ color: gunVisuals.color });
+    const strip = new THREE.Mesh(stripGeo, stripMat);
+    strip.position.y = 0.09;
+    group.add(strip);
+    
+    scene.add(group);
+    droppedWeapons.push({
+        mesh: group,
+        yBase: y,
+        floatOffset: Math.random() * Math.PI * 2,
+        weaponKey: weaponKey,
+        ammoClip: ammoClip
+    });
+}
+
+function updateDroppedWeaponPickups() {
+    if (gameState !== 'PLAYING') return;
+    const now = performance.now();
+    
+    let closestWeapon = null;
+    let closestDist = Infinity;
+    
+    for (let i = droppedWeapons.length - 1; i >= 0; i--) {
+        const item = droppedWeapons[i];
+        item.mesh.position.y = item.yBase + Math.sin(now * 0.003 + item.floatOffset) * 0.12;
+        item.mesh.rotation.y += 0.015;
+        
+        const dist = player.position.distanceTo(item.mesh.position);
+        if (dist < 2.5) {
+            if (dist < closestDist) {
+                closestDist = dist;
+                closestWeapon = item;
+            }
+        }
+    }
+    
+    const prompt = document.getElementById('interaction-prompt');
+    if (closestWeapon) {
+        if (prompt) {
+            prompt.innerHTML = `PRESS <span style="background: var(--cyan); color: #000; padding: 2px 8px; border-radius: 3px; font-family: 'Orbitron'; margin: 0 6px; font-weight: bold; box-shadow: 0 0 5px var(--cyan);">F</span> TO SWAP FOR ${WEAPON_STATS[closestWeapon.weaponKey].name.toUpperCase()}`;
+            prompt.classList.remove('hidden');
+        }
+        window.activeInteractionWeapon = closestWeapon;
+    } else {
+        if (prompt) {
+            prompt.classList.add('hidden');
+        }
+        window.activeInteractionWeapon = null;
+    }
+}
+
+function swapWeapon(dropped) {
+    if (!dropped) return;
+    
+    const newWeaponKey = dropped.weaponKey;
+    const newClip = dropped.ammoClip;
+    window.sounds.playShieldHit();
+    
+    if (activeSlot === 1) {
+        const oldWKey = primaryWeapon;
+        const oldClip = ammoClip;
+        primaryWeapon = newWeaponKey;
+        selectedWeapon = primaryWeapon;
+        ammoClip = newClip;
+        ammoClip1 = newClip;
+        spawnDroppedWeapon(player.position.x, 0.2, player.position.z, oldWKey, oldClip);
+    } else {
+        const oldWKey = secondaryWeapon;
+        const oldClip = ammoClip;
+        secondaryWeapon = newWeaponKey;
+        selectedWeapon = secondaryWeapon;
+        ammoClip = newClip;
+        ammoClip2 = newClip;
+        spawnDroppedWeapon(player.position.x, 0.2, player.position.z, oldWKey, oldClip);
+    }
+    
+    currentWeaponStats = WEAPON_STATS[selectedWeapon];
+    maxClip = currentWeaponStats.clip;
+    isReloading = false;
+    
+    const idx = droppedWeapons.indexOf(dropped);
+    if (idx > -1) {
+        droppedWeapons.splice(idx, 1);
+    }
+    scene.remove(dropped.mesh);
+    
+    if (typeof updatePlayerWeaponVisuals === 'function') updatePlayerWeaponVisuals();
+    updateHUD();
+}
+
+function updatePlayerWeaponVisuals() {
+    if (!weaponGroup) return;
+    const visuals = WEAPON_VISUALS[selectedWeapon] || { color: 0x00f0ff };
+    
+    weaponGroup.traverse(child => {
+        if (child.isMesh && child.material) {
+            if (child.material.type === 'MeshBasicMaterial' || child.material.isMeshBasicMaterial) {
+                child.material.color.setHex(visuals.color);
+            }
+        }
     });
 }
 
